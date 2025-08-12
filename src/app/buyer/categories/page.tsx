@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Leaf, Apple, Wheat, Carrot } from "lucide-react";
+import { Search, Leaf, Apple, Wheat, Carrot, Grape, Bot, MoreVertical } from "lucide-react";
 import Link from "next/link";
 
 export default function CategoriesPage() {
@@ -32,13 +32,13 @@ export default function CategoriesPage() {
       case 'grain':
         return <Wheat className="h-10 w-10 text-primary" />;
       case 'berries':
-        return <Leaf className="h-10 w-10 text-primary" />;
+        return <Grape className="h-10 w-10 text-primary" />;
       case 'herbs':
         return <Leaf className="h-10 w-10 text-primary" />;
       case 'fungi':
-        return <Leaf className="h-10 w-10 text-primary" />;
+        return <Bot className="h-10 w-10 text-primary" />;
       default:
-        return <Carrot className="h-10 w-10 text-primary" />;
+        return <MoreVertical className="h-10 w-10 text-primary" />;
     }
   }
 
