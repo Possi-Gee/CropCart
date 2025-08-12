@@ -1,7 +1,7 @@
 
 "use client";
 
-import { LayoutGrid, List, Package, Sprout } from "lucide-react";
+import { LayoutGrid, List, Package, Sprout, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ export function MobileNav() {
   const navItems = [
     { href: "/farmer/dashboard", icon: LayoutGrid, label: "Overview" },
     { href: "/farmer/listings", icon: List, label: "Listings" },
+    { href: "/farmer/listings/add", icon: PlusCircle, label: "Add" },
     { href: "/farmer/orders", icon: Package, label: "Orders" },
     { href: "/farmer/ai-tips", icon: Sprout, label: "AI Tips" },
   ];
