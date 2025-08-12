@@ -54,10 +54,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setLoading(true);
-      try {
-        if (fbUser) {
-          setFirebaseUser(fbUser);
-          const userDocRef = doc(db, "users", fbUser.uid);
+      if (fbUser) {
+        setFirebaseUser(fbUser);
+        const userDocRef = doc(db, "users", fbUser.uid);
+        try {
           const userDocSnap = await getDoc(userDocRef);
           if (userDocSnap.exists()) {
             const userData = { id: userDocSnap.id, ...userDocSnap.data() } as User;
@@ -66,42 +66,42 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
               router.push(`/${userData.role}/dashboard`);
             }
           } else {
-            // If user exists in auth but not in firestore db
+            // User is in auth but not firestore. This can happen if registration
+            // fails after creating the auth user but before creating the firestore doc.
+            // Log them out to force a clean registration.
+            await auth.signOut();
             setUser(null);
             setFirebaseUser(null);
-            // This case can happen if user is deleted from db but not from auth
-            if (!pathname.startsWith('/login') && !pathname.startsWith('/register')) {
-              router.push('/login');
-            }
           }
-        } else {
-          setUser(null);
-          setFirebaseUser(null);
-          setCart([]);
-          setWishlist([]);
-          setCrops([]);
-          setOrders([]);
-          setFarmers([]);
-          if (!pathname.startsWith('/login') && !pathname.startsWith('/register') && pathname !== '/') {
-              router.push('/');
-          }
+        } catch (error) {
+           console.error("Failed to fetch user document:", error);
+           // Potentially a permission error. Log out the user to be safe.
+           await auth.signOut();
+           setUser(null);
+           setFirebaseUser(null);
         }
-      } catch (error) {
-        console.error("Auth state change error:", error);
+      } else {
         setUser(null);
         setFirebaseUser(null);
-      } finally {
-        setLoading(false);
+        setCart([]);
+        setWishlist([]);
+        setCrops([]);
+        setOrders([]);
+        setFarmers([]);
+        if (!pathname.startsWith('/login') && !pathname.startsWith('/register') && pathname !== '/') {
+            router.push('/');
+        }
       }
+      setLoading(false);
     });
     return () => unsubscribe();
-  }, [pathname, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
 
   // Effect for fetching data once user is loaded
    useEffect(() => {
     async function fetchData() {
       if (!user) {
-        // Don't fetch data if there is no user
         setCrops([]);
         setOrders([]);
         setFarmers([]);
@@ -110,30 +110,26 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       setLoading(true);
       try {
-        // Fetch Crops
         const cropsCollectionRef = collection(db, "crops");
         const cropsSnapshot = await getDocs(query(cropsCollectionRef, orderBy("name")));
         const cropsList = cropsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Crop));
         setCrops(cropsList);
         
-        // Fetch Farmers
         const farmersCollectionRef = collection(db, "users");
         const farmersSnapshot = await getDocs(query(farmersCollectionRef, where("role", "==", "farmer")));
         const farmersList = farmersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
         setFarmers(farmersList);
 
-        // Fetch Orders (relevant to the user)
         let ordersQuery;
         if (user.role === 'buyer') {
             ordersQuery = query(collection(db, "orders"), where("buyer.id", "==", user.id), orderBy("date", "desc"));
-        } else { // farmer
+        } else {
             ordersQuery = query(collection(db, "orders"), where("farmerIds", "array-contains", user.id), orderBy("date", "desc"));
         }
         const ordersSnapshot = await getDocs(ordersQuery);
         const ordersList = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
         setOrders(ordersList);
 
-        // Load cart & wishlist from localStorage, scoped to user
         const storedCart = localStorage.getItem(`cropcart-cart-${user.id}`);
         if (storedCart) setCart(JSON.parse(storedCart));
         const storedWishlist = localStorage.getItem(`cropcart-wishlist-${user.id}`);
@@ -163,7 +159,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
         await auth.signOut();
-        // State will be cleared by the onAuthStateChanged listener
     } catch (error) {
         console.error("Error signing out:", error);
     }
@@ -262,11 +257,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         };
         
         const docRef = await addDoc(collection(db, "orders"), newOrder);
-        setOrders(prev => [{ ...newOrder, id: docRef.id, date: new Date().toISOString() }, ...prev]); // Optimistic update
+        setOrders(prev => [{ ...newOrder, id: docRef.id, date: new Date().toISOString() }, ...prev]);
         clearCart();
     } catch (error) {
         console.error("Error placing order:", error);
-        throw error; // Re-throw to be caught by the UI component
+        throw error;
     }
   };
 
@@ -338,7 +333,3 @@ export const useAppContext = () => {
   }
   return context;
 };
-
-    
-
-    
