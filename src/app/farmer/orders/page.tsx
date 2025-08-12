@@ -96,8 +96,8 @@ export default function FarmerOrdersPage() {
                 <TableRow key={order.id}>
                   <TableCell className="font-medium">#{order.id.split('-')[1].substring(0,6)}</TableCell>
                   <TableCell>{format(new Date(order.date), "MMM d, yyyy")}</TableCell>
-                  <TableCell>{order.buyer.name}</TableCell>
-                  <TableCell>{order.buyer.contact}</TableCell>
+                  <TableCell>{order.buyer?.name || 'N/A'}</TableCell>
+                  <TableCell>{order.buyer?.contact || 'N/A'}</TableCell>
                    <TableCell className="max-w-[200px] truncate">
                       {order.items.map(item => item.name).join(', ')}
                    </TableCell>
