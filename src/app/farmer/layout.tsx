@@ -27,7 +27,7 @@ export default function FarmerLayout({
           <SidebarHeader>
              <Link href="/" className="flex items-center gap-2 font-bold text-lg p-2">
                 <Leaf className="h-6 w-6 text-primary" />
-                <span className="font-headline">CropConnect</span>
+                <span className="font-headline">CropCart</span>
             </Link>
           </SidebarHeader>
           <SidebarMenu>

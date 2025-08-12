@@ -4,7 +4,7 @@ import { AppProvider } from '@/context/AppContext';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'CropConnect',
+  title: 'CropCart',
   description: 'Connecting farmers and buyers.',
 };
 

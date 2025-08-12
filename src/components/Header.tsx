@@ -26,7 +26,7 @@ export function Header() {
           {user?.role === 'farmer' && <SidebarTrigger />}
           <Link href="/" className="hidden md:flex items-center gap-2 font-bold">
             <Leaf className="h-6 w-6 text-primary" />
-            <span className="font-headline">CropConnect</span>
+            <span className="font-headline">CropCart</span>
           </Link>
         </div>
 

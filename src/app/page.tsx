@@ -9,7 +9,7 @@ export default function Home() {
         <div className="flex items-center gap-4">
             <Leaf className="h-16 w-16 text-primary" />
             <h1 className="text-5xl font-bold tracking-tighter sm:text-6xl md:text-7xl font-headline">
-            CropConnect
+            CropCart
             </h1>
         </div>
         <p className="max-w-2xl text-lg text-muted-foreground md:text-xl">
