@@ -5,7 +5,7 @@ import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle, Trash2, Edit } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, Edit, Eye } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { Crop } from "@/lib/types";
@@ -88,6 +88,9 @@ export default function FarmerListingsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                           <DropdownMenuItem onClick={() => router.push('/buyer/dashboard')}>
+                            <Eye className="mr-2 h-4 w-4" /> View
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleEdit(crop)}>
                             <Edit className="mr-2 h-4 w-4" /> Edit
                           </DropdownMenuItem>
