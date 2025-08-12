@@ -18,7 +18,9 @@ export const mockCropsData: Crop[] = [
     farmerId: 'farmer-1',
     category: 'Vegetable',
     quantity: 50,
-    unit: 'kg'
+    unit: 'kg',
+    location: 'Accra',
+    contact: '0241234567'
   },
   {
     id: 'crop-2',
@@ -29,7 +31,9 @@ export const mockCropsData: Crop[] = [
     farmerId: 'farmer-1',
     category: 'Vegetable',
     quantity: 100,
-    unit: 'head'
+    unit: 'head',
+    location: 'Accra',
+    contact: '0241234567'
   },
   {
     id: 'crop-3',
@@ -40,7 +44,9 @@ export const mockCropsData: Crop[] = [
     farmerId: 'farmer-1',
     category: 'Grain',
     quantity: 200,
-    unit: 'ear'
+    unit: 'ear',
+    location: 'Accra',
+    contact: '0241234567'
   },
    {
     id: 'crop-4',
@@ -51,7 +57,9 @@ export const mockCropsData: Crop[] = [
     farmerId: 'farmer-1',
     category: 'Vegetable',
     quantity: 80,
-    unit: 'kg'
+    unit: 'kg',
+    location: 'Accra',
+    contact: '0241234567'
   },
    {
     id: 'crop-5',
@@ -62,7 +70,9 @@ export const mockCropsData: Crop[] = [
     farmerId: 'farmer-1',
     category: 'Vegetable',
     quantity: 120,
-    unit: 'kg'
+    unit: 'kg',
+    location: 'Accra',
+    contact: '0241234567'
   },
    {
     id: 'crop-6',
@@ -73,7 +83,9 @@ export const mockCropsData: Crop[] = [
     farmerId: 'farmer-1',
     category: 'Vegetable',
     quantity: 150,
-    unit: 'piece'
+    unit: 'piece',
+    location: 'Accra',
+    contact: '0241234567'
   },
   {
     id: 'crop-7',
@@ -84,7 +96,9 @@ export const mockCropsData: Crop[] = [
     farmerId: 'farmer-1',
     category: 'Fruit',
     quantity: 100,
-    unit: 'kg'
+    unit: 'kg',
+    location: 'Accra',
+    contact: '0241234567'
   },
   {
     id: 'crop-8',
@@ -95,7 +109,9 @@ export const mockCropsData: Crop[] = [
     farmerId: 'farmer-1',
     category: 'Fruit',
     quantity: 70,
-    unit: 'bunch'
+    unit: 'bunch',
+    location: 'Accra',
+    contact: '0241234567'
   },
   {
     id: 'crop-9',
@@ -106,7 +122,9 @@ export const mockCropsData: Crop[] = [
     farmerId: 'farmer-1',
     category: 'Berries',
     quantity: 40,
-    unit: 'pint'
+    unit: 'pint',
+    location: 'Accra',
+    contact: '0241234567'
   },
   {
     id: 'crop-10',
@@ -117,7 +135,9 @@ export const mockCropsData: Crop[] = [
     farmerId: 'farmer-1',
     category: 'Herbs',
     quantity: 30,
-    unit: 'bunch'
+    unit: 'bunch',
+    location: 'Accra',
+    contact: '0241234567'
   },
   {
     id: 'crop-11',
@@ -128,7 +148,9 @@ export const mockCropsData: Crop[] = [
     farmerId: 'farmer-1',
     category: 'Herbs',
     quantity: 50,
-    unit: 'bunch'
+    unit: 'bunch',
+    location: 'Accra',
+    contact: '0241234567'
   },
   {
     id: 'crop-12',
@@ -139,7 +161,9 @@ export const mockCropsData: Crop[] = [
     farmerId: 'farmer-1',
     category: 'Fungi',
     quantity: 25,
-    unit: 'lb'
+    unit: 'lb',
+    location: 'Accra',
+    contact: '0241234567'
   }
 ];
 

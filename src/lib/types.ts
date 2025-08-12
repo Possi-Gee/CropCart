@@ -9,6 +9,8 @@ export interface Crop {
   category: string;
   quantity: number;
   unit: string;
+  location?: string;
+  contact?: string;
 }
 
 export interface CartItem extends Crop {

@@ -22,6 +22,8 @@ const formSchema = z.object({
   quantity: z.coerce.number().min(0, "Quantity cannot be negative."),
   unit: z.string().min(1, "Unit is required."),
   image: z.string().url("Must be a valid image URL.").or(z.literal("")),
+  location: z.string().optional(),
+  contact: z.string().optional(),
 });
 
 interface CropFormProps {
@@ -44,6 +46,8 @@ export function CropForm({ crop, onFinished }: CropFormProps) {
       quantity: crop?.quantity ?? 0,
       unit: crop?.unit ?? "",
       image: crop?.image ?? "https://placehold.co/600x400.png",
+      location: crop?.location ?? "",
+      contact: crop?.contact ?? "",
     },
   });
 
@@ -149,6 +153,33 @@ export function CropForm({ crop, onFinished }: CropFormProps) {
                 />
               </div>
 
+               <Separator />
+
+               <div className="grid md:grid-cols-2 gap-4">
+                 <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
+                      <FormControl><Input placeholder="e.g. Accra" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="contact"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telephone Number</FormLabel>
+                      <FormControl><Input placeholder="e.g. 024xxxxxxx" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+               </div>
+               
                <Separator />
 
                 <FormField
