@@ -66,16 +66,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
               router.push(`/${userData.role}/dashboard`);
             }
           } else {
-            // User is in auth but not firestore. This can happen if registration
-            // fails after creating the auth user but before creating the firestore doc.
-            // Log them out to force a clean registration.
             await auth.signOut();
             setUser(null);
             setFirebaseUser(null);
           }
         } catch (error) {
            console.error("Failed to fetch user document:", error);
-           // Potentially a permission error. Log out the user to be safe.
            await auth.signOut();
            setUser(null);
            setFirebaseUser(null);
@@ -124,10 +120,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (user.role === 'buyer') {
             ordersQuery = query(collection(db, "orders"), where("buyer.id", "==", user.id), orderBy("date", "desc"));
         } else {
-            ordersQuery = query(collection(db, "orders"), where("farmerIds", "array-contains", user.id), orderBy("date", "desc"));
+            // Remove orderby to avoid composite index requirement
+            ordersQuery = query(collection(db, "orders"), where("farmerIds", "array-contains", user.id));
         }
         const ordersSnapshot = await getDocs(ordersQuery);
         const ordersList = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+        
+        // Sort client-side
+        ordersList.sort((a, b) => {
+            const dateA = a.date && (a.date as any).seconds ? (a.date as any).seconds : 0;
+            const dateB = b.date && (b.date as any).seconds ? (b.date as any).seconds : 0;
+            return dateB - dateA;
+        });
+
         setOrders(ordersList);
 
         const storedCart = localStorage.getItem(`cropcart-cart-${user.id}`);
