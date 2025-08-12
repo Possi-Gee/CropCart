@@ -27,6 +27,7 @@ interface AppContextType {
   isItemInWishlist: (cropId: string) => boolean;
   orders: Order[];
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
+  farmers: User[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -40,6 +41,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+
+  const farmers = mockUsers.filter(u => u.role === 'farmer');
 
   useEffect(() => {
     // Simulate loading from localStorage to persist state
@@ -75,9 +78,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [user, pathname, router, isLoaded]);
 
   const login = (role: 'farmer' | 'buyer') => {
-    const mockUser = role === 'farmer' ? mockUsers[0] : mockUsers[1];
-    setUser(mockUser);
-    router.push(`/${role}/dashboard`);
+    const mockUser = role === 'farmer' ? mockUsers.find(u => u.role === 'farmer') : mockUsers.find(u => u.role === 'buyer');
+    if (mockUser) {
+      setUser(mockUser);
+      router.push(`/${role}/dashboard`);
+    }
   };
 
   const logout = () => {
@@ -185,6 +190,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       isItemInWishlist,
       orders,
       updateOrderStatus,
+      farmers,
     }}>
       {isLoaded ? children : null}
     </AppContext.Provider>
