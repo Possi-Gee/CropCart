@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Leaf } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +22,12 @@ function LoginForm() {
   const [email, setEmail] = useState(role === 'farmer' ? 'farmer@example.com' : 'buyer@example.com');
   const [password, setPassword] = useState('password');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Update the email when the role changes, which happens on the client after hydration
+    setEmail(role === 'farmer' ? 'farmer@example.com' : 'buyer@example.com');
+  }, [role]);
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,7 +90,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense>
       <LoginForm />
     </Suspense>
   )
