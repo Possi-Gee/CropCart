@@ -9,14 +9,15 @@ import { cn } from "@/lib/utils";
 
 export function MobileNav() {
   const pathname = usePathname();
-  const { cart } = useAppContext();
+  const { cart, wishlist } = useAppContext();
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const wishlistItemCount = wishlist.length;
 
   const navItems = [
     { href: "/buyer/dashboard", icon: Home, label: "Home" },
     { href: "/buyer/categories", icon: LayoutGrid, label: "Categories" },
     { href: "/buyer/cart", icon: ShoppingCart, label: "Cart", badge: cartItemCount > 0 ? cartItemCount : undefined },
-    { href: "/buyer/wishlist", icon: Heart, label: "Wishlist" },
+    { href: "/buyer/wishlist", icon: Heart, label: "Wishlist", badge: wishlistItemCount > 0 ? wishlistItemCount : undefined },
     { href: "#", icon: UserIcon, label: "Account" },
   ];
 
