@@ -62,10 +62,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           if (userDocSnap.exists()) {
             const userData = { id: userDocSnap.id, ...userDocSnap.data() } as User;
             setUser(userData);
+            // Redirect only when moving from a non-app page to an app page
             if (pathname === '/login' || pathname === '/register' || pathname === '/') {
               router.push(`/${userData.role}/dashboard`);
             }
           } else {
+             // If user exists in Auth but not Firestore, sign them out.
+            console.log("User not found in Firestore. Signing out.");
             await auth.signOut();
             setUser(null);
             setFirebaseUser(null);
@@ -84,7 +87,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setCrops([]);
         setOrders([]);
         setFarmers([]);
-        if (!pathname.startsWith('/login') && !pathname.startsWith('/register') && pathname !== '/') {
+        // Only redirect if user is not on a public page
+        if (!['/login', '/register', '/'].some(p => pathname.startsWith(p))) {
             router.push('/');
         }
       }
@@ -150,7 +154,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
    // Effect for persisting cart and wishlist to localStorage
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       localStorage.setItem(`cropcart-cart-${user.id}`, JSON.stringify(cart));
       localStorage.setItem(`cropcart-wishlist-${user.id}`, JSON.stringify(wishlist));
     }
