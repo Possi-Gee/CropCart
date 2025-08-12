@@ -42,7 +42,7 @@ export default function FarmerListingsPage() {
   }
 
   const handleView = (cropId: string) => {
-    router.push(`/buyer/products/${cropId}`);
+    router.push(`/products/${cropId}`);
   }
 
   return (
@@ -56,7 +56,7 @@ export default function FarmerListingsPage() {
           </Button>
       </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
                 <DialogTitle>Edit Listing</DialogTitle>

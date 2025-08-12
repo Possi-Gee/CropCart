@@ -52,7 +52,7 @@ export function CropCard({ crop }: CropCardProps) {
   const dataAiHint = crop.name.toLowerCase().split(' ').slice(0, 2).join(' ');
 
   return (
-    <Link href={`/buyer/products/${crop.id}`} className="flex">
+    <Link href={`/products/${crop.id}`} className="flex">
         <Card className="flex flex-col overflow-hidden transition-transform duration-300 ease-in-out hover:scale-105 hover:shadow-lg hover:shadow-primary/20 w-full">
         <CardHeader className="p-0 relative">
             <div className="aspect-video relative">
