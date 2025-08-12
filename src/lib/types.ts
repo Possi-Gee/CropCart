@@ -7,6 +7,8 @@ export interface Crop {
   description: string;
   farmerId: string;
   category: string;
+  quantity: number;
+  unit: string;
 }
 
 export interface CartItem extends Crop {

@@ -17,6 +17,8 @@ export const mockCropsData: Crop[] = [
     description: 'Fresh, juicy organic tomatoes, grown locally without pesticides.',
     farmerId: 'farmer-1',
     category: 'Vegetable',
+    quantity: 50,
+    unit: 'kg'
   },
   {
     id: 'crop-2',
@@ -26,6 +28,8 @@ export const mockCropsData: Crop[] = [
     description: 'Crisp and refreshing lettuce, perfect for salads and sandwiches.',
     farmerId: 'farmer-1',
     category: 'Vegetable',
+    quantity: 100,
+    unit: 'head'
   },
   {
     id: 'crop-3',
@@ -35,6 +39,8 @@ export const mockCropsData: Crop[] = [
     description: 'Sweet and tender corn on the cob, harvested at peak freshness.',
     farmerId: 'farmer-1',
     category: 'Grain',
+    quantity: 200,
+    unit: 'ear'
   },
    {
     id: 'crop-4',
@@ -44,6 +50,8 @@ export const mockCropsData: Crop[] = [
     description: 'Vibrant red bell peppers, great for stir-fries, salads, or roasting.',
     farmerId: 'farmer-1',
     category: 'Vegetable',
+    quantity: 80,
+    unit: 'kg'
   },
    {
     id: 'crop-5',
@@ -53,6 +61,8 @@ export const mockCropsData: Crop[] = [
     description: 'Sweet and crunchy carrots, packed with vitamins.',
     farmerId: 'farmer-1',
     category: 'Vegetable',
+    quantity: 120,
+    unit: 'kg'
   },
    {
     id: 'crop-6',
@@ -62,6 +72,8 @@ export const mockCropsData: Crop[] = [
     description: 'Cool and crisp cucumbers, ideal for salads or a healthy snack.',
     farmerId: 'farmer-1',
     category: 'Vegetable',
+    quantity: 150,
+    unit: 'piece'
   },
   {
     id: 'crop-7',
@@ -71,6 +83,8 @@ export const mockCropsData: Crop[] = [
     description: 'Crisp and sweet apples, perfect for a healthy snack.',
     farmerId: 'farmer-1',
     category: 'Fruit',
+    quantity: 100,
+    unit: 'kg'
   },
   {
     id: 'crop-8',
@@ -80,6 +94,8 @@ export const mockCropsData: Crop[] = [
     description: 'Juicy and sweet strawberries, fresh from the farm.',
     farmerId: 'farmer-1',
     category: 'Fruit',
+    quantity: 70,
+    unit: 'bunch'
   },
   {
     id: 'crop-9',
@@ -89,6 +105,8 @@ export const mockCropsData: Crop[] = [
     description: 'Sweet and tangy blueberries, packed with antioxidants.',
     farmerId: 'farmer-1',
     category: 'Berries',
+    quantity: 40,
+    unit: 'pint'
   },
   {
     id: 'crop-10',
@@ -98,6 +116,8 @@ export const mockCropsData: Crop[] = [
     description: 'Fresh basil, perfect for pesto or garnishing.',
     farmerId: 'farmer-1',
     category: 'Herbs',
+    quantity: 30,
+    unit: 'bunch'
   },
   {
     id: 'crop-11',
@@ -107,6 +127,8 @@ export const mockCropsData: Crop[] = [
     description: 'Cool and refreshing mint, great for drinks and desserts.',
     farmerId: 'farmer-1',
     category: 'Herbs',
+    quantity: 50,
+    unit: 'bunch'
   },
   {
     id: 'crop-12',
@@ -116,6 +138,8 @@ export const mockCropsData: Crop[] = [
     description: 'Earthy and flavorful shiitake mushrooms.',
     farmerId: 'farmer-1',
     category: 'Fungi',
+    quantity: 25,
+    unit: 'lb'
   }
 ];
 
