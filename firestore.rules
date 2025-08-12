@@ -1,21 +1,21 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
     match /users/{userId} {
-      allow read, update: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
+      allow read: if true;
+      allow create: if request.auth.uid == userId;
+      allow update: if request.auth.uid == userId;
     }
-
     match /crops/{cropId} {
       allow read: if true;
-      allow create, update, delete: if request.auth != null && request.auth.uid == request.resource.data.farmerId;
+      allow create: if request.auth.uid == request.resource.data.farmerId;
+      allow update: if request.auth.uid == resource.data.farmerId;
+      allow delete: if request.auth.uid == resource.data.farmerId;
     }
-    
     match /orders/{orderId} {
-      allow read, create: if request.auth != null && request.auth.uid == request.resource.data.buyer.id;
-      allow update: if request.auth != null && request.auth.uid in resource.data.farmerIds;
+      allow read: if request.auth != null && (request.auth.uid == resource.data.buyer.id || request.auth.uid in resource.data.farmerIds);
+      allow create: if request.auth.uid == request.resource.data.buyer.id;
+      allow update: if request.auth != null && (request.auth.uid in resource.data.farmerIds);
     }
   }
 }
