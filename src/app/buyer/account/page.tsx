@@ -5,7 +5,7 @@ import { useAppContext } from "@/context/AppContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronRight, LogOut, Settings, ShoppingBag, User as UserIcon, Edit, KeyRound } from "lucide-react";
+import { ChevronRight, LogOut, Settings, ShoppingBag, Edit } from "lucide-react";
 import Link from "next/link";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
@@ -35,7 +35,6 @@ export default function AccountPage() {
   
   const menuItems = [
     { icon: ShoppingBag, text: "My Orders", href: "/buyer/account/orders" },
-    { icon: KeyRound, text: "Change Password", href: "/buyer/account/settings" },
     { icon: Settings, text: "Settings", href: "/buyer/account/settings" },
   ];
 
