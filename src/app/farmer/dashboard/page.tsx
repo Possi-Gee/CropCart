@@ -37,11 +37,6 @@ export default function FarmerDashboard() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold font-headline">Dashboard</h1>
-         <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-            <Link href="/farmer/listings/add">
-              <PlusCircle className="mr-2 h-4 w-4" /> Add New Listing
-            </Link>
-          </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
