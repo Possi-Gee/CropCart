@@ -96,7 +96,7 @@ export default function ProductDetailPage() {
                 <Card className="bg-muted/30">
                     <CardContent className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex-1">
-                            <p className="text-3xl font-bold text-primary">GHC{crop.price.toFixed(2)} <span className="text-lg font-normal text-muted-foreground">/ {crop.unit}</span></p>
+                            <p className="text-3xl font-bold text-primary">¢{crop.price.toFixed(2)} <span className="text-lg font-normal text-muted-foreground">/ {crop.unit}</span></p>
                             <div className="flex items-center gap-2 text-muted-foreground mt-2">
                                 <Package className="h-5 w-5" /> <span>{crop.quantity} available</span>
                             </div>

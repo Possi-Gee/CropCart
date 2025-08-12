@@ -101,7 +101,7 @@ export default function FarmerOrdersPage() {
                    <TableCell className="max-w-[200px] truncate">
                       {order.items.map(item => item.name).join(', ')}
                    </TableCell>
-                   <TableCell>${order.total.toFixed(2)}</TableCell>
+                   <TableCell>¢{order.total.toFixed(2)}</TableCell>
                    <TableCell>
                       <Badge variant={getStatusBadgeVariant(order.status)} className={getStatusBadgeClassName(order.status)}>
                         {order.status}

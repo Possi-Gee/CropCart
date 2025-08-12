@@ -61,7 +61,7 @@ export default function WishlistPage() {
                         <span className="font-medium">{item.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell font-medium text-primary">${item.price.toFixed(2)}</TableCell>
+                    <TableCell className="hidden md:table-cell font-medium text-primary">¢{item.price.toFixed(2)}</TableCell>
                     <TableCell className="text-right">
                         <div className="flex gap-2 justify-end">
                             <Button size="sm" onClick={() => handleAddToCart(item)} className="bg-primary text-primary-foreground hover:bg-primary/90">

@@ -57,7 +57,7 @@ export default function OrdersPage() {
                     className={order.status === 'Delivered' ? 'bg-green-700' : ''}>
                     {order.status}
                 </Badge>
-                 <p className="font-bold text-lg mt-1">${order.total.toFixed(2)}</p>
+                 <p className="font-bold text-lg mt-1">¢{order.total.toFixed(2)}</p>
               </div>
             </CardHeader>
             <CardContent>
@@ -79,7 +79,7 @@ export default function OrdersPage() {
                         </div>
                       </TableCell>
                       <TableCell>{item.quantity}</TableCell>
-                      <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">¢{item.price.toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

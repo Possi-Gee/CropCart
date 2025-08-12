@@ -42,7 +42,7 @@ export default function FarmerDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
         <StatCard 
           title="Total Revenue"
-          value={`$${totalRevenue.toFixed(2)}`}
+          value={`¢${totalRevenue.toFixed(2)}`}
           icon={DollarSign}
           description="From all completed sales."
         />

@@ -81,7 +81,7 @@ export default function FarmerListingsPage() {
                     <Image src={crop.image} alt={crop.name} width={40} height={40} className="rounded-md object-cover" data-ai-hint={crop.name.toLowerCase().split(' ').slice(0, 2).join(' ')} />
                   </TableCell>
                   <TableCell className="font-medium">{crop.name}</TableCell>
-                  <TableCell>${crop.price.toFixed(2)}</TableCell>
+                  <TableCell>¢{crop.price.toFixed(2)}</TableCell>
                   <TableCell className="hidden sm:table-cell">{crop.quantity} {crop.unit}</TableCell>
                   <TableCell className="text-right">
                      <DropdownMenu>

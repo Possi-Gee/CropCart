@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAppContext } from "@/context/AppContext";
@@ -68,7 +69,7 @@ export default function CartPage() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">${item.price.toFixed(2)}</TableCell>
+                        <TableCell className="hidden md:table-cell">¢{item.price.toFixed(2)}</TableCell>
                         <TableCell>
                           <Input
                             type="number"
@@ -79,7 +80,7 @@ export default function CartPage() {
                             aria-label={`Quantity for ${item.name}`}
                           />
                         </TableCell>
-                        <TableCell className="text-right font-medium">${(item.price * item.quantity).toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-medium">¢{(item.price * item.quantity).toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -95,7 +96,7 @@ export default function CartPage() {
               <CardContent className="space-y-4">
                 <div className="flex justify-between text-muted-foreground">
                   <span>Subtotal</span>
-                  <span>${cartTotal.toFixed(2)}</span>
+                  <span>¢{cartTotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
                   <span>Shipping</span>
@@ -104,7 +105,7 @@ export default function CartPage() {
                 <Separator />
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span>${cartTotal.toFixed(2)}</span>
+                  <span>¢{cartTotal.toFixed(2)}</span>
                 </div>
                 <Button onClick={handlePlaceOrder} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Place Order</Button>
               </CardContent>

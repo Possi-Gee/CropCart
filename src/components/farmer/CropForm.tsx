@@ -123,7 +123,7 @@ export function CropForm({ crop, onFinished }: CropFormProps) {
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Price (GHC)</FormLabel>
+                      <FormLabel>Price (¢)</FormLabel>
                       <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>

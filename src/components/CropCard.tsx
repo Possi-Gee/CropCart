@@ -76,7 +76,7 @@ export function CropCard({ crop }: CropCardProps) {
         </CardHeader>
         <CardContent className="flex-grow p-4 space-y-2">
             <CardTitle className="text-lg font-headline">{crop.name}</CardTitle>
-            <p className="text-2xl font-bold text-primary">${crop.price.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-primary">¢{crop.price.toFixed(2)}</p>
             <CardDescription className="mt-2 text-muted-foreground line-clamp-3">
             {crop.description}
             </CardDescription>
