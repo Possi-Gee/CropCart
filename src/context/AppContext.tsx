@@ -53,6 +53,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   // Effect for auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      setLoading(true);
       try {
         if (fbUser) {
           setFirebaseUser(fbUser);
@@ -65,13 +66,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
               router.push(`/${userData.role}/dashboard`);
             }
           } else {
+            // If user exists in auth but not in firestore db
             setUser(null);
             setFirebaseUser(null);
-            router.push('/login');
+            // This case can happen if user is deleted from db but not from auth
+            if (!pathname.startsWith('/login') && !pathname.startsWith('/register')) {
+              router.push('/login');
+            }
           }
         } else {
           setUser(null);
           setFirebaseUser(null);
+          setCart([]);
+          setWishlist([]);
+          setCrops([]);
+          setOrders([]);
+          setFarmers([]);
           if (!pathname.startsWith('/login') && !pathname.startsWith('/register') && pathname !== '/') {
               router.push('/');
           }
@@ -90,6 +100,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   // Effect for fetching data once user is loaded
    useEffect(() => {
     async function fetchData() {
+      if (!user) {
+        // Don't fetch data if there is no user
+        setCrops([]);
+        setOrders([]);
+        setFarmers([]);
+        return;
+      }
+
+      setLoading(true);
       try {
         // Fetch Crops
         const cropsCollectionRef = collection(db, "crops");
@@ -103,26 +122,26 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const farmersList = farmersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
         setFarmers(farmersList);
 
-        if (user) {
-          // Fetch Orders (relevant to the user)
-          let ordersQuery;
-          if (user.role === 'buyer') {
-              ordersQuery = query(collection(db, "orders"), where("buyer.id", "==", user.id), orderBy("date", "desc"));
-          } else { // farmer
-              ordersQuery = query(collection(db, "orders"), where("farmerIds", "array-contains", user.id), orderBy("date", "desc"));
-          }
-          const ordersSnapshot = await getDocs(ordersQuery);
-          const ordersList = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
-          setOrders(ordersList);
-
-          // Load cart & wishlist from localStorage, scoped to user
-          const storedCart = localStorage.getItem(`cropcart-cart-${user.id}`);
-          if (storedCart) setCart(JSON.parse(storedCart));
-          const storedWishlist = localStorage.getItem(`cropcart-wishlist-${user.id}`);
-          if (storedWishlist) setWishlist(JSON.parse(storedWishlist));
+        // Fetch Orders (relevant to the user)
+        let ordersQuery;
+        if (user.role === 'buyer') {
+            ordersQuery = query(collection(db, "orders"), where("buyer.id", "==", user.id), orderBy("date", "desc"));
+        } else { // farmer
+            ordersQuery = query(collection(db, "orders"), where("farmerIds", "array-contains", user.id), orderBy("date", "desc"));
         }
+        const ordersSnapshot = await getDocs(ordersQuery);
+        const ordersList = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+        setOrders(ordersList);
+
+        // Load cart & wishlist from localStorage, scoped to user
+        const storedCart = localStorage.getItem(`cropcart-cart-${user.id}`);
+        if (storedCart) setCart(JSON.parse(storedCart));
+        const storedWishlist = localStorage.getItem(`cropcart-wishlist-${user.id}`);
+        if (storedWishlist) setWishlist(JSON.parse(storedWishlist));
       } catch (error) {
           console.error("Error fetching data:", error)
+      } finally {
+          setLoading(false);
       }
     }
     fetchData();
@@ -144,11 +163,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
         await auth.signOut();
-        setUser(null);
-        setFirebaseUser(null);
-        setCart([]);
-        setWishlist([]);
-        router.push('/');
+        // State will be cleared by the onAuthStateChanged listener
     } catch (error) {
         console.error("Error signing out:", error);
     }
@@ -311,7 +326,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       farmers,
       loading,
     }}>
-      {loading ? null : children}
+      {children}
     </AppContext.Provider>
   );
 };
@@ -323,3 +338,5 @@ export const useAppContext = () => {
   }
   return context;
 };
+
+    
