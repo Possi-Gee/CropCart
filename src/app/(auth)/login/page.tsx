@@ -19,13 +19,12 @@ function LoginForm() {
   const role = searchParams.get('role') === 'farmer' ? 'farmer' : 'buyer';
   const { toast } = useToast();
   
-  const [email, setEmail] = useState(role === 'farmer' ? 'farmer@example.com' : 'buyer@example.com');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Update the email when the role changes, which happens on the client after hydration
-    setEmail(role === 'farmer' ? 'farmer@example.com' : 'buyer@example.com');
+    // Rerender on role change if needed, but keep fields empty
   }, [role]);
 
 
@@ -35,15 +34,14 @@ function LoginForm() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       // Auth state change in AppContext will handle redirect.
-      // We don't reset isLoading here because the page will redirect.
-      // If the redirect is slow, the user sees "Logging in..." which is intended.
     } catch (error: any) {
       toast({
         title: "Login Failed",
         description: error.message,
         variant: "destructive",
       });
-      setIsLoading(false);
+    } finally {
+        setIsLoading(false);
     }
   };
 

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -66,7 +67,7 @@ export function FarmingTipsClient({ getFarmingTips }: FarmingTipsClientProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Crop Type</FormLabel>
-                      <FormControl><Input placeholder="e.g., Wheat" {...field} /></FormControl>
+                      <FormControl><Input placeholder="e.g., Tomatoes" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -77,7 +78,7 @@ export function FarmingTipsClient({ getFarmingTips }: FarmingTipsClientProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Location</FormLabel>
-                      <FormControl><Input placeholder="e.g., Central Valley, California" {...field} /></FormControl>
+                      <FormControl><Input placeholder="e.g., Accra, Ghana" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
