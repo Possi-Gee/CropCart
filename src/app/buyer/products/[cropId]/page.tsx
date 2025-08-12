@@ -56,8 +56,8 @@ export default function ProductDetailPage() {
           </BreadcrumbList>
         </Breadcrumb>
 
-        <div className="grid md:grid-cols-2 gap-8">
-            <div>
+        <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+            <div className="md:sticky md:top-20 self-start">
                  <Image
                     src={crop.image}
                     alt={crop.name}
