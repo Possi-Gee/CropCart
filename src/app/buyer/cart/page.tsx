@@ -11,6 +11,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { useState } from "react";
 
 export default function CartPage() {
   const { cart, removeFromCart, updateCartQuantity, cartTotal, placeOrder } = useAppContext();
@@ -130,4 +131,3 @@ export default function CartPage() {
     </div>
   );
 }
-
