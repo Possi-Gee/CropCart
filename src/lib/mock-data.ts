@@ -1,8 +1,8 @@
 import type { Crop, User, Order } from '@/lib/types';
 
 export const mockUsers: User[] = [
-  { id: 'farmer-1', name: 'John Doe', role: 'farmer' },
-  { id: 'buyer-1', name: 'Jane Smith', role: 'buyer' },
+  { id: 'farmer-1', name: 'John Doe', role: 'farmer', avatarUrl: 'https://placehold.co/100x100.png' },
+  { id: 'buyer-1', name: 'Jane Smith', role: 'buyer', avatarUrl: 'https://placehold.co/100x100.png' },
 ];
 
 export const mockCropsData: Crop[] = [

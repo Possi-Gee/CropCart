@@ -16,6 +16,7 @@ export interface User {
   id: string;
   name: string;
   role: 'farmer' | 'buyer';
+  avatarUrl?: string;
 }
 
 export interface Order {
