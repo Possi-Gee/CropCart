@@ -2,6 +2,7 @@
 "use client";
 
 import { Header } from "@/components/Header";
+import { MobileNav } from "@/components/farmer/MobileNav";
 import {
   SidebarProvider,
   Sidebar,
@@ -10,7 +11,7 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarHeader,
-  useSidebar,
+  useSidebar
 } from "@/components/ui/sidebar";
 import { Blocks, Sprout, Leaf } from "lucide-react";
 import Link from "next/link";
@@ -33,6 +34,11 @@ export default function FarmerLayout({
 }) {
   const pathname = usePathname();
 
+  const navItems = [
+    { href: "/farmer/dashboard", icon: Blocks, label: "Dashboard", isActive: pathname === '/farmer/dashboard' },
+    { href: "/farmer/ai-tips", icon: Sprout, label: "AI Farming Tips", isActive: pathname === '/farmer/ai-tips' },
+  ];
+
   return (
     <SidebarProvider>
         <Sidebar>
@@ -40,29 +46,24 @@ export default function FarmerLayout({
             <SidebarBrand />
           </SidebarHeader>
           <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === '/farmer/dashboard'} tooltip="Dashboard">
-                <Link href="/farmer/dashboard">
-                  <Blocks />
-                  <span>Dashboard</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === '/farmer/ai-tips'} tooltip="AI Farming Tips">
-                <Link href="/farmer/ai-tips">
-                  <Sprout />
-                  <span>AI Farming Tips</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {navItems.map((item) => (
+               <SidebarMenuItem key={item.label}>
+                <SidebarMenuButton asChild isActive={item.isActive} tooltip={item.label}>
+                  <Link href={item.href}>
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
           </SidebarMenu>
         </Sidebar>
         <SidebarInset>
           <Header />
-          <main className="flex-1 p-4 md:p-8">
+          <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 pb-24 md:pb-8">
             {children}
           </main>
+          <MobileNav />
         </SidebarInset>
     </SidebarProvider>
   );
