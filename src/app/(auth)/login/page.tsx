@@ -40,8 +40,7 @@ function LoginForm() {
         description: error.message,
         variant: "destructive",
       });
-    } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
