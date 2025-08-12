@@ -62,9 +62,9 @@ export function CropForm({ crop, onFinished }: CropFormProps) {
   }
 
   return (
-    <Card className="border-0 shadow-none">
+    <Card className="border-0 shadow-none md:border md:shadow-sm">
         <CardHeader>
-            <CardTitle>{crop ? "Edit Listing" : "Create a New Listing"}</CardTitle>
+            <CardTitle>Product Details</CardTitle>
             <CardDescription>Fill out the form below to list your produce.</CardDescription>
         </CardHeader>
         <CardContent>

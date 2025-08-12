@@ -3,13 +3,13 @@
 
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MoreHorizontal, PlusCircle, Trash2, Edit } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { Crop } from "@/lib/types";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { CropForm } from "@/components/farmer/CropForm";
 import {
   DropdownMenu,
@@ -17,9 +17,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function FarmerListingsPage() {
   const { crops, user, deleteCrop } = useAppContext();
+  const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCrop, setEditingCrop] = useState<Crop | null>(null);
 
@@ -27,11 +30,6 @@ export default function FarmerListingsPage() {
 
   const handleEdit = (crop: Crop) => {
     setEditingCrop(crop);
-    setIsDialogOpen(true);
-  }
-
-  const handleAddNew = () => {
-    setEditingCrop(null);
     setIsDialogOpen(true);
   }
   
@@ -47,17 +45,18 @@ export default function FarmerListingsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold font-headline">My Crop Listings</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={handleAddNew} className="bg-primary text-primary-foreground hover:bg-primary/90">
+         <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Link href="/farmer/listings/add">
               <PlusCircle className="mr-2 h-4 w-4" /> Add New Crop
-            </Button>
-          </DialogTrigger>
+            </Link>
+          </Button>
+      </div>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-lg">
              <CropForm crop={editingCrop} onFinished={handleDialogClose} />
           </DialogContent>
         </Dialog>
-      </div>
 
       <Card>
         <CardContent className="p-4">

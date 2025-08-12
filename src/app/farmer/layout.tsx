@@ -37,7 +37,7 @@ export default function FarmerLayout({
 
   const navItems = [
     { href: "/farmer/dashboard", icon: LayoutGrid, label: "Overview", isActive: pathname === '/farmer/dashboard' },
-    { href: "/farmer/listings", icon: List, label: "My Listings", isActive: pathname === '/farmer/listings' },
+    { href: "/farmer/listings", icon: List, label: "My Listings", isActive: pathname.startsWith('/farmer/listings') },
     { href: "/farmer/orders", icon: Package, label: "Orders", isActive: pathname === '/farmer/orders' },
     { href: "/farmer/ai-tips", icon: Sprout, label: "AI Farming Tips", isActive: pathname === '/farmer/ai-tips' },
   ];
@@ -60,8 +60,8 @@ export default function FarmerLayout({
               </SidebarMenuItem>
             ))}
              <SidebarMenuItem>
-                 <SidebarMenuButton asChild tooltip="Add Listing" isActive={false}>
-                    <Link href="/farmer/listings">
+                 <SidebarMenuButton asChild tooltip="Add Listing" isActive={pathname === '/farmer/listings/add'}>
+                    <Link href="/farmer/listings/add">
                         <PlusCircle />
                         <span>Add Listing</span>
                     </Link>
