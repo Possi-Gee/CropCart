@@ -4,16 +4,15 @@ import { useState } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Leaf, Apple, Wheat, Carrot } from "lucide-react";
 import Link from "next/link";
-import { Carrot, Wheat, Apple } from "lucide-react";
 
 export default function CategoriesPage() {
   const { crops } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
 
   const categories = Array.from(new Set(crops.map(crop => crop.category)))
-    .filter(Boolean) // Ensure no undefined/null categories
+    .filter(Boolean) 
     .map(category => ({
       name: category,
       count: crops.filter(c => c.category === category).length
@@ -31,6 +30,12 @@ export default function CategoriesPage() {
         return <Apple className="h-10 w-10 text-primary" />;
       case 'grain':
         return <Wheat className="h-10 w-10 text-primary" />;
+      case 'berries':
+        return <Leaf className="h-10 w-10 text-primary" />;
+      case 'herbs':
+        return <Leaf className="h-10 w-10 text-primary" />;
+      case 'fungi':
+        return <Leaf className="h-10 w-10 text-primary" />;
       default:
         return <Carrot className="h-10 w-10 text-primary" />;
     }
