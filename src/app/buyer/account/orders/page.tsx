@@ -16,6 +16,22 @@ import {
 } from "@/components/ui/breadcrumb";
 import Link from "next/link";
 import Image from "next/image";
+import { Timestamp } from "firebase/firestore";
+
+function formatDate(date: any) {
+    if (!date) return 'N/A';
+    if (date instanceof Timestamp) {
+        return format(date.toDate(), "MMMM d, yyyy");
+    }
+    if (typeof date === 'string') {
+        return format(new Date(date), "MMMM d, yyyy");
+    }
+     if (typeof date.seconds === 'number') {
+        return format(new Date(date.seconds * 1000), "MMMM d, yyyy");
+    }
+    return 'Invalid Date';
+}
+
 
 export default function OrdersPage() {
   const { orders } = useAppContext();
@@ -43,13 +59,20 @@ export default function OrdersPage() {
         </Breadcrumb>
       <h1 className="text-3xl font-bold font-headline mb-6">My Orders</h1>
       <div className="space-y-6">
+        {orders.length === 0 && (
+          <Card>
+            <CardContent className="p-6 text-center text-muted-foreground">
+              You haven&apos;t placed any orders yet.
+            </CardContent>
+          </Card>
+        )}
         {orders.map((order) => (
           <Card key={order.id}>
             <CardHeader className="flex flex-row justify-between items-start">
               <div>
-                <CardTitle>Order #{order.id.split('-')[1]}</CardTitle>
+                <CardTitle>Order #{order.id.substring(0,6)}</CardTitle>
                 <CardDescription>
-                  Date: {format(new Date(order.date), "MMMM d, yyyy")}
+                  Date: {formatDate(order.date)}
                 </CardDescription>
               </div>
               <div className="text-right">

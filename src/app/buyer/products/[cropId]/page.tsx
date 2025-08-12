@@ -12,9 +12,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import Link from "next/link";
 import { Crop, User as Farmer } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProductDetailPage() {
-  const { crops, addToCart, farmers } = useAppContext();
+  const { crops, addToCart, farmers, loading } = useAppContext();
   const params = useParams();
   const { toast } = useToast();
   const cropId = Array.isArray(params.cropId) ? params.cropId[0] : params.cropId;
@@ -22,7 +23,30 @@ export default function ProductDetailPage() {
   const crop: Crop | undefined = crops.find(c => c.id === cropId);
   const farmer: Farmer | undefined = crop ? farmers.find(f => f.id === crop.farmerId) : undefined;
 
+  if (loading) {
+      return (
+          <div className="container mx-auto">
+                <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+                     <div>
+                        <Skeleton className="w-full aspect-square rounded-lg" />
+                    </div>
+                     <div className="space-y-6">
+                        <Skeleton className="h-6 w-1/4" />
+                        <Skeleton className="h-10 w-3/4" />
+                        <div className="flex gap-6">
+                            <Skeleton className="h-5 w-1/3" />
+                            <Skeleton className="h-5 w-1/3" />
+                        </div>
+                        <Skeleton className="h-20 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                    </div>
+                </div>
+          </div>
+      )
+  }
+
   if (!crop) {
+    // We check for loading first, then if crop is not found, it's a real 404
     notFound();
   }
 

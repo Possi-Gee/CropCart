@@ -13,15 +13,27 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateCartQuantity, cartTotal, clearCart } = useAppContext();
+  const { cart, removeFromCart, updateCartQuantity, cartTotal, placeOrder } = useAppContext();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handlePlaceOrder = () => {
-    clearCart();
-    toast({
-      title: "Order Placed!",
-      description: "Thank you for your purchase. Your order is on its way!",
-    });
+  const handlePlaceOrder = async () => {
+    setIsLoading(true);
+    try {
+      await placeOrder();
+      toast({
+        title: "Order Placed!",
+        description: "Thank you for your purchase. Your order is being processed.",
+      });
+    } catch (error) {
+       toast({
+        title: "Order Failed",
+        description: "There was a problem placing your order. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+        setIsLoading(false);
+    }
   }
 
   return (
@@ -107,7 +119,9 @@ export default function CartPage() {
                   <span>Total</span>
                   <span>¢{cartTotal.toFixed(2)}</span>
                 </div>
-                <Button onClick={handlePlaceOrder} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Place Order</Button>
+                <Button onClick={handlePlaceOrder} className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
+                  {isLoading ? "Placing Order..." : "Place Order"}
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -116,3 +130,4 @@ export default function CartPage() {
     </div>
   );
 }
+

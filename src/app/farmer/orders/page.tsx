@@ -16,7 +16,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Truck, CheckCircle } from "lucide-react";
-import type { OrderStatus } from "@/lib/types";
+import type { OrderStatus, Order } from "@/lib/types";
+import { Timestamp } from "firebase/firestore";
+
+function formatDate(date: any) {
+    if (!date) return 'N/A';
+    if (date instanceof Timestamp) {
+        return format(date.toDate(), "MMM d, yyyy");
+    }
+    if (typeof date === 'string') {
+        return format(new Date(date), "MMM d, yyyy");
+    }
+    if (typeof date.seconds === 'number') {
+        return format(new Date(date.seconds * 1000), "MMM d, yyyy");
+    }
+    return 'Invalid Date';
+}
+
 
 export default function FarmerOrdersPage() {
   const { orders, user, crops, updateOrderStatus } = useAppContext();
@@ -34,7 +50,7 @@ export default function FarmerOrdersPage() {
       items: itemsForFarmer,
       total: orderTotalForFarmer
     };
-  }).filter(Boolean);
+  }).filter((order): order is Order => order !== null);
 
   const getStatusBadgeVariant = (status: OrderStatus) => {
     switch (status) {
@@ -94,12 +110,12 @@ export default function FarmerOrdersPage() {
             <TableBody>
               {farmerOrders.map((order) => order && (
                 <TableRow key={order.id}>
-                  <TableCell className="font-medium">#{order.id.split('-')[1].substring(0,6)}</TableCell>
-                  <TableCell>{format(new Date(order.date), "MMM d, yyyy")}</TableCell>
+                  <TableCell className="font-medium">#{order.id.substring(0,6)}</TableCell>
+                  <TableCell>{formatDate(order.date)}</TableCell>
                   <TableCell>{order.buyer?.name || 'N/A'}</TableCell>
                   <TableCell>{order.buyer?.contact || 'N/A'}</TableCell>
                    <TableCell className="max-w-[200px] truncate">
-                      {order.items.map(item => item.name).join(', ')}
+                      {order.items.map(item => `${item.name} (x${item.quantity})`).join(', ')}
                    </TableCell>
                    <TableCell>¢{order.total.toFixed(2)}</TableCell>
                    <TableCell>
@@ -139,3 +155,4 @@ export default function FarmerOrdersPage() {
     </div>
   );
 }
+
