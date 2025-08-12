@@ -17,3 +17,11 @@ export interface User {
   name: string;
   role: 'farmer' | 'buyer';
 }
+
+export interface Order {
+    id: string;
+    date: string;
+    items: CartItem[];
+    total: number;
+    status: 'Pending' | 'Shipped' | 'Delivered';
+}

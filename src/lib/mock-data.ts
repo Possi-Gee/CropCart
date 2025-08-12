@@ -1,4 +1,4 @@
-import type { Crop, User } from '@/lib/types';
+import type { Crop, User, Order } from '@/lib/types';
 
 export const mockUsers: User[] = [
   { id: 'farmer-1', name: 'John Doe', role: 'farmer' },
@@ -115,3 +115,25 @@ export const mockCropsData: Crop[] = [
     category: 'Fungi',
   }
 ];
+
+export const mockOrders: Order[] = [
+    {
+        id: 'order-1',
+        date: '2024-07-20',
+        items: [
+            { ...mockCropsData[0], quantity: 2 },
+            { ...mockCropsData[2], quantity: 4 },
+        ],
+        total: (2.99 * 2) + (0.75 * 4),
+        status: 'Delivered'
+    },
+    {
+        id: 'order-2',
+        date: '2024-07-22',
+        items: [
+            { ...mockCropsData[7], quantity: 1 },
+        ],
+        total: 3.50,
+        status: 'Shipped'
+    }
+]

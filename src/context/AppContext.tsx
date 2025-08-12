@@ -3,13 +3,15 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import type { Crop, CartItem, User } from '@/lib/types';
-import { mockUsers, mockCropsData } from '@/lib/mock-data';
+import { mockUsers, mockCropsData, mockOrders } from '@/lib/mock-data';
 import { useRouter, usePathname } from 'next/navigation';
+import type { Order } from '@/lib/types';
 
 interface AppContextType {
   user: User | null;
   login: (role: 'farmer' | 'buyer') => void;
   logout: () => void;
+  updateUser: (user: User) => void;
   crops: Crop[];
   addCrop: (crop: Omit<Crop, 'id' | 'farmerId'>) => void;
   updateCrop: (crop: Crop) => void;
@@ -24,6 +26,7 @@ interface AppContextType {
   addToWishlist: (crop: Crop) => void;
   removeFromWishlist: (cropId: string) => void;
   isItemInWishlist: (cropId: string) => boolean;
+  orders: Order[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -33,6 +36,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [crops, setCrops] = useState<Crop[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<Crop[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -43,11 +47,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const storedCrops = localStorage.getItem('cropcart-crops');
     const storedCart = localStorage.getItem('cropcart-cart');
     const storedWishlist = localStorage.getItem('cropcart-wishlist');
+    const storedOrders = localStorage.getItem('cropcart-orders');
     
     if (storedUser) setUser(JSON.parse(storedUser));
     setCrops(storedCrops ? JSON.parse(storedCrops) : mockCropsData);
     if (storedCart) setCart(JSON.parse(storedCart));
     if (storedWishlist) setWishlist(JSON.parse(storedWishlist));
+    setOrders(storedOrders ? JSON.parse(storedOrders) : mockOrders);
+
 
     setIsLoaded(true);
   }, []);
@@ -58,7 +65,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('cropcart-crops', JSON.stringify(crops));
     localStorage.setItem('cropcart-cart', JSON.stringify(cart));
     localStorage.setItem('cropcart-wishlist', JSON.stringify(wishlist));
-  }, [user, crops, cart, wishlist, isLoaded]);
+    localStorage.setItem('cropcart-orders', JSON.stringify(orders));
+  }, [user, crops, cart, wishlist, orders, isLoaded]);
 
   useEffect(() => {
     if (isLoaded && !user && !pathname.startsWith('/login') && !pathname.startsWith('/register') && pathname !== '/') {
@@ -81,6 +89,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('cropcart-wishlist');
     router.push('/');
   };
+
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+  }
 
   const addCrop = (crop: Omit<Crop, 'id' | 'farmerId'>) => {
     if (user?.role !== 'farmer') return;
@@ -152,6 +164,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       user,
       login,
       logout,
+      updateUser,
       crops,
       addCrop,
       updateCrop,
@@ -165,7 +178,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       wishlist,
       addToWishlist,
       removeFromWishlist,
-      isItemInWishlist
+      isItemInWishlist,
+      orders,
     }}>
       {isLoaded ? children : null}
     </AppContext.Provider>
