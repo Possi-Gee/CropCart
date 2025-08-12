@@ -13,16 +13,17 @@ import {
   SidebarHeader,
   useSidebar
 } from "@/components/ui/sidebar";
-import { Blocks, Sprout, Leaf } from "lucide-react";
+import { LayoutGrid, Leaf, List, Package, PlusCircle, Sprout } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
+import { cn } from "@/lib/utils";
 
 function SidebarBrand() {
   const { open } = useSidebar();
   return (
-    <Link href="/" className="flex items-center gap-2 font-bold text-lg p-2">
+    <Link href="/farmer/dashboard" className="flex items-center gap-2 font-bold text-lg p-2">
       <Leaf className="h-6 w-6 text-primary" />
-      <span className={`font-headline ${!open && "hidden"}`}>CropCart</span>
+       <span className={cn("font-headline", !open && "hidden")}>CropCart</span>
     </Link>
   )
 }
@@ -35,7 +36,9 @@ export default function FarmerLayout({
   const pathname = usePathname();
 
   const navItems = [
-    { href: "/farmer/dashboard", icon: Blocks, label: "Dashboard", isActive: pathname === '/farmer/dashboard' },
+    { href: "/farmer/dashboard", icon: LayoutGrid, label: "Overview", isActive: pathname === '/farmer/dashboard' },
+    { href: "/farmer/listings", icon: List, label: "My Listings", isActive: pathname === '/farmer/listings' },
+    { href: "/farmer/orders", icon: Package, label: "Orders", isActive: pathname === '/farmer/orders' },
     { href: "/farmer/ai-tips", icon: Sprout, label: "AI Farming Tips", isActive: pathname === '/farmer/ai-tips' },
   ];
 
@@ -56,6 +59,14 @@ export default function FarmerLayout({
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
+             <SidebarMenuItem>
+                 <SidebarMenuButton asChild tooltip="Add Listing" isActive={false}>
+                    <Link href="/farmer/listings">
+                        <PlusCircle />
+                        <span>Add Listing</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </Sidebar>
         <SidebarInset>
