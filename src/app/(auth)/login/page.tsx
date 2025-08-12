@@ -34,7 +34,9 @@ function LoginForm() {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // Auth state change in AppContext will handle redirect
+      // Auth state change in AppContext will handle redirect.
+      // We don't reset isLoading here because the page will redirect.
+      // If the redirect is slow, the user sees "Logging in..." which is intended.
     } catch (error: any) {
       toast({
         title: "Login Failed",

@@ -40,7 +40,7 @@ function RegisterForm() {
         avatarUrl: `https://placehold.co/100x100.png`
       });
 
-      // Auth state change in AppContext will handle redirect
+      // Auth state change in AppContext will handle redirect.
     } catch (error: any) {
       toast({
         title: "Registration Failed",
