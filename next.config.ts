@@ -29,6 +29,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'new-image-domain.com', // Replace with the actual domain you want to use
+        port: '',
+        pathname: '/**',
+      }
     ],
   },
 };
