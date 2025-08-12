@@ -1,20 +1,24 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppContext } from "@/context/AppContext";
 import type { Crop } from "@/lib/types";
-import { ShoppingCart } from "lucide-react";
+import { Heart, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface CropCardProps {
   crop: Crop;
 }
 
 export function CropCard({ crop }: CropCardProps) {
-  const { addToCart } = useAppContext();
+  const { addToCart, addToWishlist, removeFromWishlist, isItemInWishlist } = useAppContext();
   const { toast } = useToast();
+  
+  const inWishlist = isItemInWishlist(crop.id);
 
   const handleAddToCart = () => {
     addToCart(crop);
@@ -23,12 +27,28 @@ export function CropCard({ crop }: CropCardProps) {
       description: `${crop.name} has been added to your cart.`,
     });
   };
+  
+  const handleWishlistToggle = () => {
+    if (inWishlist) {
+      removeFromWishlist(crop.id);
+       toast({
+        title: "Removed from wishlist",
+        description: `${crop.name} has been removed from your wishlist.`,
+      });
+    } else {
+      addToWishlist(crop);
+      toast({
+        title: "Added to wishlist",
+        description: `${crop.name} has been added to your wishlist.`,
+      });
+    }
+  }
 
   const dataAiHint = crop.name.toLowerCase().split(' ').slice(0, 2).join(' ');
 
   return (
     <Card className="flex flex-col overflow-hidden transition-transform duration-300 ease-in-out hover:scale-105 hover:shadow-lg hover:shadow-primary/20">
-      <CardHeader className="p-0">
+      <CardHeader className="p-0 relative">
         <div className="aspect-video relative">
           <Image
             src={crop.image}
@@ -38,6 +58,15 @@ export function CropCard({ crop }: CropCardProps) {
             data-ai-hint={dataAiHint}
           />
         </div>
+         <Button
+          size="icon"
+          variant="ghost"
+          className="absolute top-2 right-2 rounded-full h-8 w-8 bg-background/50 backdrop-blur-sm hover:bg-background/75"
+          onClick={handleWishlistToggle}
+        >
+          <Heart className={cn("h-5 w-5", inWishlist ? "text-red-500 fill-current" : "text-white")} />
+           <span className="sr-only">Add to wishlist</span>
+        </Button>
       </CardHeader>
       <CardContent className="flex-grow p-4 space-y-2">
         <CardTitle className="text-lg font-headline">{crop.name}</CardTitle>

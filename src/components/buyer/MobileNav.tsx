@@ -16,7 +16,7 @@ export function MobileNav() {
     { href: "/buyer/dashboard", icon: Home, label: "Home" },
     { href: "/buyer/categories", icon: LayoutGrid, label: "Categories" },
     { href: "/buyer/cart", icon: ShoppingCart, label: "Cart", badge: cartItemCount > 0 ? cartItemCount : undefined },
-    { href: "#", icon: Heart, label: "Wishlist" },
+    { href: "/buyer/wishlist", icon: Heart, label: "Wishlist" },
     { href: "#", icon: UserIcon, label: "Account" },
   ];
 

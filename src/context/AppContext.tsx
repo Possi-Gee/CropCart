@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
@@ -19,6 +20,10 @@ interface AppContextType {
   updateCartQuantity: (cropId: string, quantity: number) => void;
   clearCart: () => void;
   cartTotal: number;
+  wishlist: Crop[];
+  addToWishlist: (crop: Crop) => void;
+  removeFromWishlist: (cropId: string) => void;
+  isItemInWishlist: (cropId: string) => boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -27,29 +32,33 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [crops, setCrops] = useState<Crop[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [wishlist, setWishlist] = useState<Crop[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     // Simulate loading from localStorage to persist state
-    const storedUser = localStorage.getItem('cropconnect-user');
-    const storedCrops = localStorage.getItem('cropconnect-crops');
-    const storedCart = localStorage.getItem('cropconnect-cart');
+    const storedUser = localStorage.getItem('cropcart-user');
+    const storedCrops = localStorage.getItem('cropcart-crops');
+    const storedCart = localStorage.getItem('cropcart-cart');
+    const storedWishlist = localStorage.getItem('cropcart-wishlist');
     
     if (storedUser) setUser(JSON.parse(storedUser));
     setCrops(storedCrops ? JSON.parse(storedCrops) : mockCropsData);
     if (storedCart) setCart(JSON.parse(storedCart));
+    if (storedWishlist) setWishlist(JSON.parse(storedWishlist));
 
     setIsLoaded(true);
   }, []);
 
   useEffect(() => {
     if (!isLoaded) return;
-    localStorage.setItem('cropconnect-user', JSON.stringify(user));
-    localStorage.setItem('cropconnect-crops', JSON.stringify(crops));
-    localStorage.setItem('cropconnect-cart', JSON.stringify(cart));
-  }, [user, crops, cart, isLoaded]);
+    localStorage.setItem('cropcart-user', JSON.stringify(user));
+    localStorage.setItem('cropcart-crops', JSON.stringify(crops));
+    localStorage.setItem('cropcart-cart', JSON.stringify(cart));
+    localStorage.setItem('cropcart-wishlist', JSON.stringify(wishlist));
+  }, [user, crops, cart, wishlist, isLoaded]);
 
   useEffect(() => {
     if (isLoaded && !user && !pathname.startsWith('/login') && !pathname.startsWith('/register') && pathname !== '/') {
@@ -66,8 +75,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     setUser(null);
     setCart([]);
-    localStorage.removeItem('cropconnect-user');
-    localStorage.removeItem('cropconnect-cart');
+    setWishlist([]);
+    localStorage.removeItem('cropcart-user');
+    localStorage.removeItem('cropcart-cart');
+    localStorage.removeItem('cropcart-wishlist');
     router.push('/');
   };
 
@@ -119,6 +130,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
 
+  const addToWishlist = (crop: Crop) => {
+    setWishlist(prev => {
+      if (prev.find(item => item.id === crop.id)) {
+        return prev;
+      }
+      return [...prev, crop];
+    });
+  };
+
+  const removeFromWishlist = (cropId: string) => {
+    setWishlist(prev => prev.filter(item => item.id !== cropId));
+  }
+
+  const isItemInWishlist = (cropId: string) => {
+    return wishlist.some(item => item.id === cropId);
+  }
 
   return (
     <AppContext.Provider value={{
@@ -135,6 +162,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       updateCartQuantity,
       clearCart,
       cartTotal,
+      wishlist,
+      addToWishlist,
+      removeFromWishlist,
+      isItemInWishlist
     }}>
       {isLoaded ? children : null}
     </AppContext.Provider>
