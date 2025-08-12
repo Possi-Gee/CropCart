@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAppContext } from "@/context/AppContext";
@@ -23,7 +24,7 @@ export function Header() {
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
         <div className="flex items-center gap-2">
-          {user?.role === 'farmer' && <SidebarTrigger />}
+          <SidebarTrigger />
           <Link href="/" className="hidden md:flex items-center gap-2 font-bold">
             <Leaf className="h-6 w-6 text-primary" />
             <span className="font-headline">CropCart</span>
@@ -33,7 +34,7 @@ export function Header() {
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center space-x-2">
             {user?.role === 'buyer' && (
-              <Button asChild variant="ghost" className="relative h-9 w-9">
+              <Button asChild variant="ghost" className="relative h-9 w-9 hidden md:inline-flex">
                 <Link href="/buyer/cart">
                   <ShoppingCart className="h-5 w-5" />
                   {cartItemCount > 0 && (
