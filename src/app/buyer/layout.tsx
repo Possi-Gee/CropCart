@@ -11,11 +11,23 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarHeader,
+  useSidebar
 } from "@/components/ui/sidebar";
 import { Home, LayoutGrid, ShoppingCart, Heart, User as UserIcon, Leaf } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
 import { useAppContext } from "@/context/AppContext";
+
+function SidebarBrand() {
+  const { open } = useSidebar();
+  return (
+    <Link href="/" className="flex items-center gap-2 font-bold text-lg p-2">
+      <Leaf className="h-6 w-6 text-primary" />
+      <span className={`font-headline ${!open && "hidden"}`}>CropCart</span>
+    </Link>
+  )
+}
+
 
 export default function BuyerLayout({
   children,
@@ -40,10 +52,7 @@ export default function BuyerLayout({
     <SidebarProvider>
         <Sidebar>
           <SidebarHeader>
-             <Link href="/" className="flex items-center gap-2 font-bold text-lg p-2">
-                <Leaf className="h-6 w-6 text-primary" />
-                <span className="font-headline">CropCart</span>
-            </Link>
+            <SidebarBrand />
           </SidebarHeader>
           <SidebarMenu>
             {navItems.map((item) => (

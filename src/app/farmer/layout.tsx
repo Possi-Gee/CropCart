@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Header } from "@/components/Header";
@@ -9,10 +10,21 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarHeader,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Blocks, Sprout, Leaf } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
+
+function SidebarBrand() {
+  const { open } = useSidebar();
+  return (
+    <Link href="/" className="flex items-center gap-2 font-bold text-lg p-2">
+      <Leaf className="h-6 w-6 text-primary" />
+      <span className={`font-headline ${!open && "hidden"}`}>CropCart</span>
+    </Link>
+  )
+}
 
 export default function FarmerLayout({
   children,
@@ -25,10 +37,7 @@ export default function FarmerLayout({
     <SidebarProvider>
         <Sidebar>
           <SidebarHeader>
-             <Link href="/" className="flex items-center gap-2 font-bold text-lg p-2">
-                <Leaf className="h-6 w-6 text-primary" />
-                <span className="font-headline">CropCart</span>
-            </Link>
+            <SidebarBrand />
           </SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
