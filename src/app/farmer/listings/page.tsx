@@ -42,7 +42,7 @@ export default function FarmerListingsPage() {
   }
 
   const handleView = (cropId: string) => {
-    router.push(`/buyer/products/${cropId}`);
+    window.open(`/buyer/products/${cropId}`, '_blank');
   }
 
   return (
