@@ -29,11 +29,12 @@ const formSchema = z.object({
 interface CropFormProps {
   crop: Crop | null;
   onFinished: () => void;
+  showHeader?: boolean;
 }
 
 const categories = ["Vegetable", "Fruit", "Grain", "Berries", "Herbs", "Fungi"];
 
-export function CropForm({ crop, onFinished }: CropFormProps) {
+export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps) {
   const { addCrop, updateCrop } = useAppContext();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -67,11 +68,13 @@ export function CropForm({ crop, onFinished }: CropFormProps) {
 
   return (
     <Card className="border-0 shadow-none md:border md:shadow-sm">
-        <CardHeader>
-            <CardTitle>Product Details</CardTitle>
-            <CardDescription>Fill out the form below to list your produce.</CardDescription>
-        </CardHeader>
-        <CardContent>
+        {showHeader && (
+            <CardHeader>
+                <CardTitle>Product Details</CardTitle>
+                <CardDescription>Fill out the form below to list your produce.</CardDescription>
+            </CardHeader>
+        )}
+        <CardContent className={!showHeader ? "pt-6" : ""}>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField

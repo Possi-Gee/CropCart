@@ -9,7 +9,7 @@ import { MoreHorizontal, PlusCircle, Trash2, Edit, Eye } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { Crop } from "@/lib/types";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CropForm } from "@/components/farmer/CropForm";
 import {
   DropdownMenu,
@@ -42,7 +42,7 @@ export default function FarmerListingsPage() {
   }
 
   const handleView = (cropId: string) => {
-    window.open(`/buyer/products/${cropId}`, '_blank');
+    router.push(`/buyer/products/${cropId}`);
   }
 
   return (
@@ -56,9 +56,12 @@ export default function FarmerListingsPage() {
           </Button>
       </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
           <DialogContent className="sm:max-w-lg">
-             <CropForm crop={editingCrop} onFinished={handleDialogClose} />
+            <DialogHeader>
+                <DialogTitle>Edit Listing</DialogTitle>
+            </DialogHeader>
+             <CropForm crop={editingCrop} onFinished={handleDialogClose} showHeader={false} />
           </DialogContent>
         </Dialog>
 
