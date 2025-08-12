@@ -13,7 +13,7 @@ interface AppContextType {
   firebaseUser: FirebaseUser | null;
   login: (role: 'farmer' | 'buyer') => void; // This will be removed, login is handled by auth pages
   logout: () => void;
-  updateUser: (user: Partial<User>) => void;
+  updateUser: (user: Partial<User>) => Promise<void>;
   crops: Crop[];
   addCrop: (crop: Omit<Crop, 'id' | 'farmerId'>) => Promise<void>;
   updateCrop: (crop: Crop) => Promise<void>;
@@ -53,31 +53,36 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   // Effect for auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-      if (fbUser) {
-        setFirebaseUser(fbUser);
-        const userDocRef = doc(db, "users", fbUser.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists()) {
-          const userData = { id: userDocSnap.id, ...userDocSnap.data() } as User;
-          setUser(userData);
-          // Redirect based on role if they land on a generic page
-           if (pathname === '/login' || pathname === '/register' || pathname === '/') {
-             router.push(`/${userData.role}/dashboard`);
-           }
+      try {
+        if (fbUser) {
+          setFirebaseUser(fbUser);
+          const userDocRef = doc(db, "users", fbUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          if (userDocSnap.exists()) {
+            const userData = { id: userDocSnap.id, ...userDocSnap.data() } as User;
+            setUser(userData);
+            if (pathname === '/login' || pathname === '/register' || pathname === '/') {
+              router.push(`/${userData.role}/dashboard`);
+            }
+          } else {
+            setUser(null);
+            setFirebaseUser(null);
+            router.push('/login');
+          }
         } else {
-           // This case might happen if user doc creation fails after registration
-           setUser(null);
-           setFirebaseUser(null);
-           router.push('/login');
+          setUser(null);
+          setFirebaseUser(null);
+          if (!pathname.startsWith('/login') && !pathname.startsWith('/register') && pathname !== '/') {
+              router.push('/');
+          }
         }
-      } else {
+      } catch (error) {
+        console.error("Auth state change error:", error);
         setUser(null);
         setFirebaseUser(null);
-        if (!pathname.startsWith('/login') && !pathname.startsWith('/register') && pathname !== '/') {
-            router.push('/');
-        }
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
     return () => unsubscribe();
   }, [pathname, router]);
@@ -85,35 +90,39 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   // Effect for fetching data once user is loaded
    useEffect(() => {
     async function fetchData() {
-      // Fetch Crops
-      const cropsCollectionRef = collection(db, "crops");
-      const cropsSnapshot = await getDocs(query(cropsCollectionRef, orderBy("name")));
-      const cropsList = cropsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Crop));
-      setCrops(cropsList);
-      
-      // Fetch Farmers
-      const farmersCollectionRef = collection(db, "users");
-      const farmersSnapshot = await getDocs(query(farmersCollectionRef, where("role", "==", "farmer")));
-      const farmersList = farmersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-      setFarmers(farmersList);
+      try {
+        // Fetch Crops
+        const cropsCollectionRef = collection(db, "crops");
+        const cropsSnapshot = await getDocs(query(cropsCollectionRef, orderBy("name")));
+        const cropsList = cropsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Crop));
+        setCrops(cropsList);
+        
+        // Fetch Farmers
+        const farmersCollectionRef = collection(db, "users");
+        const farmersSnapshot = await getDocs(query(farmersCollectionRef, where("role", "==", "farmer")));
+        const farmersList = farmersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        setFarmers(farmersList);
 
-      if (user) {
-        // Fetch Orders (relevant to the user)
-        let ordersQuery;
-        if (user.role === 'buyer') {
-            ordersQuery = query(collection(db, "orders"), where("buyer.id", "==", user.id), orderBy("date", "desc"));
-        } else { // farmer
-            ordersQuery = query(collection(db, "orders"), where("farmerIds", "array-contains", user.id), orderBy("date", "desc"));
+        if (user) {
+          // Fetch Orders (relevant to the user)
+          let ordersQuery;
+          if (user.role === 'buyer') {
+              ordersQuery = query(collection(db, "orders"), where("buyer.id", "==", user.id), orderBy("date", "desc"));
+          } else { // farmer
+              ordersQuery = query(collection(db, "orders"), where("farmerIds", "array-contains", user.id), orderBy("date", "desc"));
+          }
+          const ordersSnapshot = await getDocs(ordersQuery);
+          const ordersList = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+          setOrders(ordersList);
+
+          // Load cart & wishlist from localStorage, scoped to user
+          const storedCart = localStorage.getItem(`cropcart-cart-${user.id}`);
+          if (storedCart) setCart(JSON.parse(storedCart));
+          const storedWishlist = localStorage.getItem(`cropcart-wishlist-${user.id}`);
+          if (storedWishlist) setWishlist(JSON.parse(storedWishlist));
         }
-        const ordersSnapshot = await getDocs(ordersQuery);
-        const ordersList = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
-        setOrders(ordersList);
-
-        // Load cart & wishlist from localStorage, scoped to user
-        const storedCart = localStorage.getItem(`cropcart-cart-${user.id}`);
-        if (storedCart) setCart(JSON.parse(storedCart));
-        const storedWishlist = localStorage.getItem(`cropcart-wishlist-${user.id}`);
-        if (storedWishlist) setWishlist(JSON.parse(storedWishlist));
+      } catch (error) {
+          console.error("Error fetching data:", error)
       }
     }
     fetchData();
@@ -129,49 +138,62 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
 
   const login = (role: 'farmer' | 'buyer') => {
-    // This is a dummy function now, real login is handled by firebase auth pages
-    // It's kept for now to avoid breaking other components that might call it
-    // In a real app, you would remove this and related logic.
     console.log("Login function called, but auth is handled by Firebase pages.");
   };
 
   const logout = async () => {
-    await auth.signOut();
-    setUser(null);
-    setFirebaseUser(null);
-    setCart([]);
-    setWishlist([]);
-    // No need to clear local storage here, it will be cleared on next login's empty state
-    router.push('/');
+    try {
+        await auth.signOut();
+        setUser(null);
+        setFirebaseUser(null);
+        setCart([]);
+        setWishlist([]);
+        router.push('/');
+    } catch (error) {
+        console.error("Error signing out:", error);
+    }
   };
 
   const updateUser = async (updatedUserData: Partial<User>) => {
     if (!user) return;
-    const userDocRef = doc(db, "users", user.id);
-    await updateDoc(userDocRef, updatedUserData);
-    setUser(prev => ({ ...prev!, ...updatedUserData }));
+    try {
+        const userDocRef = doc(db, "users", user.id);
+        await updateDoc(userDocRef, updatedUserData);
+        setUser(prev => ({ ...prev!, ...updatedUserData }));
+    } catch (error) {
+        console.error("Error updating user:", error);
+    }
   };
 
   const addCrop = async (crop: Omit<Crop, 'id' | 'farmerId'>) => {
     if (user?.role !== 'farmer') return;
-    const newCropData = {
-      ...crop,
-      farmerId: user.id,
-    };
-    const docRef = await addDoc(collection(db, "crops"), newCropData);
-    setCrops(prev => [...prev, { ...newCropData, id: docRef.id }]);
+    try {
+        const newCropData = { ...crop, farmerId: user.id };
+        const docRef = await addDoc(collection(db, "crops"), newCropData);
+        setCrops(prev => [...prev, { ...newCropData, id: docRef.id }]);
+    } catch (error) {
+        console.error("Error adding crop:", error);
+    }
   };
 
   const updateCrop = async (updatedCrop: Crop) => {
-    const cropDocRef = doc(db, "crops", updatedCrop.id);
-    await updateDoc(cropDocRef, updatedCrop);
-    setCrops(prev => prev.map(c => c.id === updatedCrop.id ? updatedCrop : c));
+    try {
+        const cropDocRef = doc(db, "crops", updatedCrop.id);
+        await updateDoc(cropDocRef, updatedCrop);
+        setCrops(prev => prev.map(c => c.id === updatedCrop.id ? updatedCrop : c));
+    } catch(error) {
+        console.error("Error updating crop:", error);
+    }
   };
 
   const deleteCrop = async (cropId: string) => {
-    const cropDocRef = doc(db, "crops", cropId);
-    await deleteDoc(cropDocRef);
-    setCrops(prev => prev.filter(c => c.id !== cropId));
+    try {
+        const cropDocRef = doc(db, "crops", cropId);
+        await deleteDoc(cropDocRef);
+        setCrops(prev => prev.filter(c => c.id !== cropId));
+    } catch(error) {
+        console.error("Error deleting crop:", error);
+    }
   };
 
   const addToCart = (crop: Crop, quantity: number = 1) => {
@@ -207,27 +229,30 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const placeOrder = async () => {
     if (!user || cart.length === 0) return;
-
-    const farmerIds = [...new Set(cart.map(item => item.farmerId))];
-
-    const newOrder: Omit<Order, 'id'> = {
-        date: serverTimestamp(),
-        buyer: {
-            id: user.id,
-            name: user.name,
-            role: 'buyer',
-            contact: user.contact,
-            avatarUrl: user.avatarUrl,
-        },
-        items: cart,
-        total: cartTotal,
-        status: 'Pending',
-        farmerIds,
-    };
-    
-    const docRef = await addDoc(collection(db, "orders"), newOrder);
-    setOrders(prev => [{ ...newOrder, id: docRef.id, date: new Date().toISOString() }, ...prev]); // Optimistic update
-    clearCart();
+    try {
+        const farmerIds = [...new Set(cart.map(item => item.farmerId))];
+        const newOrder: Omit<Order, 'id'> = {
+            date: serverTimestamp(),
+            buyer: {
+                id: user.id,
+                name: user.name,
+                role: 'buyer',
+                contact: user.contact,
+                avatarUrl: user.avatarUrl,
+            },
+            items: cart,
+            total: cartTotal,
+            status: 'Pending',
+            farmerIds,
+        };
+        
+        const docRef = await addDoc(collection(db, "orders"), newOrder);
+        setOrders(prev => [{ ...newOrder, id: docRef.id, date: new Date().toISOString() }, ...prev]); // Optimistic update
+        clearCart();
+    } catch (error) {
+        console.error("Error placing order:", error);
+        throw error; // Re-throw to be caught by the UI component
+    }
   };
 
   const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
@@ -250,9 +275,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
-    const orderDocRef = doc(db, "orders", orderId);
-    await updateDoc(orderDocRef, { status });
-    setOrders(prev => prev.map(o => o.id === orderId ? {...o, status} : o));
+    try {
+        const orderDocRef = doc(db, "orders", orderId);
+        await updateDoc(orderDocRef, { status });
+        setOrders(prev => prev.map(o => o.id === orderId ? {...o, status} : o));
+    } catch (error) {
+        console.error("Error updating order status:", error);
+    }
   }
 
   return (
