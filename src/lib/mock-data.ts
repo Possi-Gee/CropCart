@@ -1,8 +1,11 @@
+
 import type { Crop, User, Order } from '@/lib/types';
 
 export const mockUsers: User[] = [
   { id: 'farmer-1', name: 'John Doe', role: 'farmer', avatarUrl: 'https://placehold.co/100x100.png' },
   { id: 'buyer-1', name: 'Jane Smith', role: 'buyer', avatarUrl: 'https://placehold.co/100x100.png' },
+  { id: 'buyer-2', name: 'Michael Ofori', role: 'buyer', avatarUrl: 'https://placehold.co/100x100.png', contact: '0509349675' },
+  { id: 'buyer-3', name: 'Micheal k', role: 'buyer', avatarUrl: 'https://placehold.co/100x100.png', contact: '0530066891' },
 ];
 
 export const mockCropsData: Crop[] = [
@@ -71,12 +74,12 @@ export const mockCropsData: Crop[] = [
   },
   {
     id: 'crop-8',
-    name: 'Strawberries',
+    name: 'Sweet Banana',
     image: 'https://placehold.co/600x400.png',
     price: 3.50,
     description: 'Juicy and sweet strawberries, fresh from the farm.',
     farmerId: 'farmer-1',
-    category: 'Berries',
+    category: 'Fruit',
   },
   {
     id: 'crop-9',
@@ -118,22 +121,54 @@ export const mockCropsData: Crop[] = [
 
 export const mockOrders: Order[] = [
     {
-        id: 'order-1',
-        date: '2024-07-20',
+        id: 'order-1-Ykmlup',
+        date: '2025-08-05',
+        buyer: mockUsers[2],
         items: [
             { ...mockCropsData[0], quantity: 2 },
             { ...mockCropsData[2], quantity: 4 },
         ],
         total: (2.99 * 2) + (0.75 * 4),
-        status: 'Delivered'
+        status: 'Shipped'
     },
     {
-        id: 'order-2',
-        date: '2024-07-22',
+        id: 'order-2-bXp1kL',
+        date: '2025-08-05',
+        buyer: mockUsers[3],
         items: [
             { ...mockCropsData[7], quantity: 1 },
         ],
         total: 3.50,
+        status: 'Pending'
+    },
+     {
+        id: 'order-3-aahRYi',
+        date: '2025-08-04',
+        buyer: {id: 'buyer-4', name: 'JOSHUA Dankwa', role: 'buyer', contact: '0546476432'},
+        items: [
+            { ...mockCropsData[0], quantity: 1 },
+        ],
+        total: 2.99,
+        status: 'Pending'
+    },
+      {
+        id: 'order-4-T5PhbB',
+        date: '2025-08-04',
+        buyer: {id: 'buyer-5', name: 'Exceltrine Abena Ntewusu', role: 'buyer', contact: '0598500298'},
+        items: [
+            { ...mockCropsData[0], quantity: 1 },
+        ],
+        total: 2.99,
         status: 'Shipped'
+    },
+     {
+        id: 'order-5-Ph6MVu',
+        date: '2025-08-04',
+        buyer: {id: 'buyer-6', name: 'Possi Gee', role: 'buyer', contact: '0509349675'},
+        items: [
+            { ...mockCropsData[0], quantity: 3 },
+        ],
+        total: 2.99 * 3,
+        status: 'Delivered'
     }
 ]

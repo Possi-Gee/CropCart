@@ -2,10 +2,9 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { Crop, CartItem, User } from '@/lib/types';
+import type { Crop, CartItem, User, Order, OrderStatus } from '@/lib/types';
 import { mockUsers, mockCropsData, mockOrders } from '@/lib/mock-data';
 import { useRouter, usePathname } from 'next/navigation';
-import type { Order } from '@/lib/types';
 
 interface AppContextType {
   user: User | null;
@@ -27,6 +26,7 @@ interface AppContextType {
   removeFromWishlist: (cropId: string) => void;
   isItemInWishlist: (cropId: string) => boolean;
   orders: Order[];
+  updateOrderStatus: (orderId: string, status: OrderStatus) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -159,6 +159,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return wishlist.some(item => item.id === cropId);
   }
 
+  const updateOrderStatus = (orderId: string, status: OrderStatus) => {
+    setOrders(prev => prev.map(o => o.id === orderId ? {...o, status} : o));
+  }
+
   return (
     <AppContext.Provider value={{
       user,
@@ -180,6 +184,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       removeFromWishlist,
       isItemInWishlist,
       orders,
+      updateOrderStatus,
     }}>
       {isLoaded ? children : null}
     </AppContext.Provider>

@@ -1,3 +1,4 @@
+
 export interface Crop {
   id: string;
   name: string;
@@ -17,12 +18,16 @@ export interface User {
   name: string;
   role: 'farmer' | 'buyer';
   avatarUrl?: string;
+  contact?: string;
 }
+
+export type OrderStatus = 'Pending' | 'Shipped' | 'Delivered';
 
 export interface Order {
     id: string;
     date: string;
     items: CartItem[];
     total: number;
-    status: 'Pending' | 'Shipped' | 'Delivered';
+    status: OrderStatus;
+    buyer: User;
 }
