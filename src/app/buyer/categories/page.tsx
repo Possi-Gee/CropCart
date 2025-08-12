@@ -13,6 +13,7 @@ export default function CategoriesPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const categories = Array.from(new Set(crops.map(crop => crop.category)))
+    .filter(Boolean) // Ensure no undefined/null categories
     .map(category => ({
       name: category,
       count: crops.filter(c => c.category === category).length
