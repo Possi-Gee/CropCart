@@ -5,6 +5,7 @@ export interface Crop {
   price: number;
   description: string;
   farmerId: string;
+  category: string;
 }
 
 export interface CartItem extends Crop {

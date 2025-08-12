@@ -14,7 +14,7 @@ export function MobileNav() {
 
   const navItems = [
     { href: "/buyer/dashboard", icon: Home, label: "Home" },
-    { href: "#", icon: LayoutGrid, label: "Categories" },
+    { href: "/buyer/categories", icon: LayoutGrid, label: "Categories" },
     { href: "/buyer/cart", icon: ShoppingCart, label: "Cart", badge: cartItemCount > 0 ? cartItemCount : undefined },
     { href: "#", icon: Heart, label: "Wishlist" },
     { href: "#", icon: UserIcon, label: "Account" },
