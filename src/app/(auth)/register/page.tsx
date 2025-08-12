@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,11 @@ function RegisterForm() {
             Already have an account?{" "}
             <Link href={`/login?role=${role}`} className="underline text-primary/90 hover:text-primary">
               Login
+            </Link>
+          </div>
+          <div className="mt-2 text-center text-sm">
+             <Link href={`/register?role=${role === 'farmer' ? 'buyer' : 'farmer'}`} className="underline text-muted-foreground hover:text-primary">
+              {role === 'farmer' ? 'Register as a Buyer instead' : 'Register as a Farmer instead'}
             </Link>
           </div>
         </CardContent>
