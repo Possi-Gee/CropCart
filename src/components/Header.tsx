@@ -65,7 +65,10 @@ export function Header() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout}>
+                  <DropdownMenuItem onSelect={(event) => {
+                    event.preventDefault();
+                    logout();
+                  }}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
                   </DropdownMenuItem>
