@@ -40,6 +40,12 @@ const nextConfig: NextConfig = {
         hostname: 'edu-quest-alpha.vercel.app',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.saveur.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
