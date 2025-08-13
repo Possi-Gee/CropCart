@@ -34,6 +34,12 @@ const nextConfig: NextConfig = {
         hostname: 'new-image-domain.com', // Replace with the actual domain you want to use
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'edu-quest-alpha.vercel.app',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
