@@ -124,7 +124,7 @@ export default function AccountPage() {
         </div>
       </Card>
 
-      <Button onClick={logout} variant="outline" className="w-full">
+      <Button onClick={() => logout()} variant="outline" className="w-full">
         <LogOut className="mr-2 h-4 w-4" />
         Logout
       </Button>
