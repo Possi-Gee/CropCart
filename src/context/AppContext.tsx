@@ -122,7 +122,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
         let ordersQuery;
         if (user.role === 'buyer') {
-            ordersQuery = query(collection(db, "orders"), where("buyer.id", "==", user.id), orderBy("date", "desc"));
+            // Remove orderBy to avoid composite index, will sort client-side
+            ordersQuery = query(collection(db, "orders"), where("buyer.id", "==", user.id));
         } else {
             // Remove orderby to avoid composite index requirement
             ordersQuery = query(collection(db, "orders"), where("farmerIds", "array-contains", user.id));
