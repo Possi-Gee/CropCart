@@ -23,8 +23,15 @@ function formatDate(date: any) {
     if (date instanceof Timestamp) {
         return format(date.toDate(), "MMMM d, yyyy");
     }
+    // Handle Firestore serverTimestamp which becomes a Date object on client
+    if (date instanceof Date) {
+        return format(date, "MMMM d, yyyy");
+    }
     if (typeof date === 'string') {
-        return format(new Date(date), "MMMM d, yyyy");
+        const parsedDate = new Date(date);
+        if (!isNaN(parsedDate.getTime())) {
+            return format(parsedDate, "MMMM d, yyyy");
+        }
     }
      if (typeof date.seconds === 'number') {
         return format(new Date(date.seconds * 1000), "MMMM d, yyyy");

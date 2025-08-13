@@ -1,5 +1,5 @@
 
-import { FieldValue } from "firebase/firestore";
+import { FieldValue, Timestamp } from "firebase/firestore";
 
 export interface Crop {
   id: string;
@@ -32,7 +32,7 @@ export type OrderStatus = 'Pending' | 'Shipped' | 'Delivered';
 // This is what's stored in Firestore
 export interface Order {
     id: string;
-    date: FieldValue | string; // serverTimestamp on write, string on read
+    date: FieldValue | Timestamp | Date | string; // serverTimestamp on write, Timestamp or Date on read
     items: CartItem[];
     total: number;
     status: OrderStatus;

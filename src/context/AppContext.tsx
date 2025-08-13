@@ -6,7 +6,7 @@ import type { Crop, CartItem, User, Order, OrderStatus } from '@/lib/types';
 import { useRouter, usePathname } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp, query, where, orderBy } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp, query, where, orderBy, Timestamp } from 'firebase/firestore';
 
 interface AppContextType {
   user: User | null;
@@ -130,12 +130,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 ordersQuery = query(collection(db, "orders"), where("farmerIds", "array-contains", user.id));
             }
             const ordersSnapshot = await getDocs(ordersQuery);
-            const ordersList = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+            const ordersList = ordersSnapshot.docs.map(doc => {
+              const data = doc.data();
+              // Convert Firestore Timestamps to Dates for consistent handling
+              return { 
+                id: doc.id, 
+                ...data,
+                date: data.date instanceof Timestamp ? data.date.toDate() : data.date
+              } as Order;
+            });
             
             // Client-side sorting
             ordersList.sort((a, b) => {
-                const dateA = a.date && (a.date as any).seconds ? (a.date as any).toDate() : new Date(a.date as string);
-                const dateB = b.date && (b.date as any).seconds ? (b.date as any).toDate() : new Date(b.date as string);
+                const dateA = new Date(a.date as string | Date);
+                const dateB = new Date(b.date as string | Date);
                 return dateB.getTime() - dateA.getTime();
             });
 
@@ -271,7 +279,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         };
         
         const docRef = await addDoc(collection(db, "orders"), newOrder);
-        setOrders(prev => [{ ...newOrder, id: docRef.id, date: new Date().toISOString() }, ...prev]);
+        
+        // Optimistically update the UI with a client-side date
+        const newOrderForState: Order = { ...newOrder, id: docRef.id, date: new Date() };
+
+        setOrders(prev => [newOrderForState, ...prev]);
+
         clearCart();
     } catch (error) {
         console.error("Error placing order:", error);
