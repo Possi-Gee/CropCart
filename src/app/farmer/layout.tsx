@@ -13,7 +13,7 @@ import {
   SidebarHeader,
   useSidebar
 } from "@/components/ui/sidebar";
-import { LayoutGrid, Leaf, List, Package, PlusCircle, Sprout } from "lucide-react";
+import { LayoutGrid, Leaf, List, Package, PlusCircle, Sprout, User as UserIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
@@ -40,6 +40,7 @@ export default function FarmerLayout({
     { href: "/farmer/listings", icon: List, label: "My Listings", isActive: pathname.startsWith('/farmer/listings') },
     { href: "/farmer/orders", icon: Package, label: "Orders", isActive: pathname === '/farmer/orders' },
     { href: "/farmer/ai-tips", icon: Sprout, label: "AI Farming Tips", isActive: pathname === '/farmer/ai-tips' },
+    { href: "/farmer/account", icon: UserIcon, label: "Account", isActive: pathname === '/farmer/account' },
   ];
 
   return (
