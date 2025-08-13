@@ -62,9 +62,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           if (userDocSnap.exists()) {
             const userData = { id: userDocSnap.id, ...userDocSnap.data() } as User;
             setUser(userData);
-            // Redirect only when moving from a non-app page to an app page
-            if (pathname === '/login' || pathname === '/register' || pathname === '/') {
-              router.push(`/${userData.role}/dashboard`);
+            
+            const publicRoutes = ['/login', '/register', '/'];
+            const isPublicRoute = publicRoutes.some(p => pathname.startsWith(p));
+
+            if (isPublicRoute) {
+               router.push(`/${userData.role}/dashboard`);
             }
           } else {
              // If user exists in Auth but not Firestore, sign them out.
@@ -88,7 +91,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setOrders([]);
         setFarmers([]);
         // Only redirect if user is not on a public page
-        if (!['/login', '/register', '/'].some(p => pathname.startsWith(p))) {
+        if (!['/login', '/register', '/', '/products'].some(p => pathname.startsWith(p))) {
             router.push('/');
         }
       }
@@ -101,10 +104,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   // Effect for fetching data once user is loaded
    useEffect(() => {
     async function fetchData() {
-      if (!user) {
-        setCrops([]);
-        setOrders([]);
-        setFarmers([]);
+      if (!user && !pathname.startsWith('/products')) {
+        setLoading(false);
         return;
       }
 
@@ -119,31 +120,31 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const farmersSnapshot = await getDocs(query(farmersCollectionRef, where("role", "==", "farmer")));
         const farmersList = farmersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
         setFarmers(farmersList);
-
-        let ordersQuery;
-        if (user.role === 'buyer') {
-            // Remove orderBy to avoid composite index, will sort client-side
-            ordersQuery = query(collection(db, "orders"), where("buyer.id", "==", user.id));
-        } else {
-            // Remove orderby to avoid composite index requirement
-            ordersQuery = query(collection(db, "orders"), where("farmerIds", "array-contains", user.id));
-        }
-        const ordersSnapshot = await getDocs(ordersQuery);
-        const ordersList = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
         
-        // Sort client-side
-        ordersList.sort((a, b) => {
-            const dateA = a.date && (a.date as any).seconds ? (a.date as any).seconds : 0;
-            const dateB = b.date && (b.date as any).seconds ? (b.date as any).seconds : 0;
-            return dateB - dateA;
-        });
+        if (user) {
+            let ordersQuery;
+            if (user.role === 'buyer') {
+                ordersQuery = query(collection(db, "orders"), where("buyer.id", "==", user.id));
+            } else {
+                ordersQuery = query(collection(db, "orders"), where("farmerIds", "array-contains", user.id));
+            }
+            const ordersSnapshot = await getDocs(ordersQuery);
+            const ordersList = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+            
+            ordersList.sort((a, b) => {
+                const dateA = a.date && (a.date as any).seconds ? (a.date as any).seconds : 0;
+                const dateB = b.date && (b.date as any).seconds ? (b.date as any).seconds : 0;
+                return dateB - dateA;
+            });
 
-        setOrders(ordersList);
+            setOrders(ordersList);
 
-        const storedCart = localStorage.getItem(`cropcart-cart-${user.id}`);
-        if (storedCart) setCart(JSON.parse(storedCart));
-        const storedWishlist = localStorage.getItem(`cropcart-wishlist-${user.id}`);
-        if (storedWishlist) setWishlist(JSON.parse(storedWishlist));
+            const storedCart = localStorage.getItem(`cropcart-cart-${user.id}`);
+            if (storedCart) setCart(JSON.parse(storedCart));
+            const storedWishlist = localStorage.getItem(`cropcart-wishlist-${user.id}`);
+            if (storedWishlist) setWishlist(JSON.parse(storedWishlist));
+        }
+
       } catch (error) {
           console.error("Error fetching data:", error)
       } finally {
@@ -151,7 +152,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     fetchData();
-  }, [user]);
+  }, [user, pathname]);
 
    // Effect for persisting cart and wishlist to localStorage
   useEffect(() => {
