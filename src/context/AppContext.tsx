@@ -91,7 +91,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setOrders([]);
         setFarmers([]);
         // Only redirect if user is not on a public page
-        if (!['/login', '/register', '/', '/products'].some(p => pathname.startsWith(p))) {
+        const isAuthPage = ['/login', '/register'].some(p => pathname.startsWith(p));
+        if (!isAuthPage && !pathname.startsWith('/products') && pathname !== '/') {
             router.push('/');
         }
       }
@@ -131,10 +132,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             const ordersSnapshot = await getDocs(ordersQuery);
             const ordersList = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
             
+            // Client-side sorting
             ordersList.sort((a, b) => {
-                const dateA = a.date && (a.date as any).seconds ? (a.date as any).seconds : 0;
-                const dateB = b.date && (b.date as any).seconds ? (b.date as any).seconds : 0;
-                return dateB - dateA;
+                const dateA = a.date && (a.date as any).seconds ? (a.date as any).toDate() : new Date(a.date as string);
+                const dateB = b.date && (b.date as any).seconds ? (b.date as any).toDate() : new Date(b.date as string);
+                return dateB.getTime() - dateA.getTime();
             });
 
             setOrders(ordersList);
@@ -170,6 +172,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
         await auth.signOut();
+        router.push('/');
     } catch (error) {
         console.error("Error signing out:", error);
     }
