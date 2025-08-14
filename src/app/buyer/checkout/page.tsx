@@ -23,11 +23,11 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState("card");
 
   useEffect(() => {
-    // Only redirect if loading is complete, cart is empty, and we are not in the middle of processing an order.
-    if (!loading && cart.length === 0 && !isLoading) {
+    // Only redirect if loading is complete and the cart is truly empty.
+    if (!loading && cart.length === 0) {
       router.replace("/buyer/cart");
     }
-  }, [cart, loading, router, isLoading]);
+  }, [cart.length, loading, router]);
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,11 +61,11 @@ export default function CheckoutPage() {
     })
   }
 
-  if (cart.length === 0 && !isLoading) {
+  if (loading || (cart.length === 0 && !isLoading)) {
     return (
       <div className="container mx-auto text-center py-20">
-        <h1 className="text-2xl font-bold">Your cart is empty.</h1>
-        <p className="text-muted-foreground mt-2">Redirecting you to the cart page...</p>
+        <h1 className="text-2xl font-bold">Loading Checkout...</h1>
+        <p className="text-muted-foreground mt-2">Please wait while we prepare your order.</p>
       </div>
     );
   }

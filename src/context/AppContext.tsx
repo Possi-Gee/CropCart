@@ -37,6 +37,23 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const getInitialState = <T,>(key: string, fallback: T): T => {
+    if (typeof window === 'undefined') {
+        return fallback;
+    }
+    const storedValue = localStorage.getItem(key);
+    if (storedValue) {
+        try {
+            return JSON.parse(storedValue);
+        } catch (e) {
+            console.error(`Error parsing localStorage key "${key}":`, e);
+            return fallback;
+        }
+    }
+    return fallback;
+};
+
+
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<(User & { email?: string }) | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
@@ -62,6 +79,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           if (userDocSnap.exists()) {
             const userData = { id: userDocSnap.id, ...userDocSnap.data(), email: fbUser.email } as (User & { email?: string });
             setUser(userData);
+
+            // Load cart and wishlist from localStorage upon login
+            const storedCart = getInitialState<CartItem[]>(`cropcart-cart-${fbUser.uid}`, []);
+            const storedWishlist = getInitialState<Crop[]>(`cropcart-wishlist-${fbUser.uid}`, []);
+            setCart(storedCart);
+            setWishlist(storedWishlist);
             
             const publicRoutes = ['/login', '/register', '/'];
             const isPublicRoute = publicRoutes.some(p => pathname.startsWith(p));
@@ -73,27 +96,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
              // If user exists in Auth but not Firestore, sign them out.
             console.log("User not found in Firestore. Signing out.");
             await auth.signOut();
-            setUser(null);
-            setFirebaseUser(null);
           }
         } catch (error) {
            console.error("Failed to fetch user document:", error);
            await auth.signOut();
-           setUser(null);
-           setFirebaseUser(null);
         }
       } else {
+        // User logged out
         setUser(null);
         setFirebaseUser(null);
         setCart([]);
         setWishlist([]);
-        setCrops([]);
         setOrders([]);
-        setFarmers([]);
-        // Only redirect if user is not on a public page
+        // Keep crops and farmers loaded for public pages
         const isAuthPage = ['/login', '/register'].some(p => pathname.startsWith(p));
-        const isCheckoutPage = pathname.startsWith('/buyer/checkout');
-        if (!isAuthPage && !pathname.startsWith('/products') && !isCheckoutPage && pathname !== '/') {
+        const isProductPage = pathname.startsWith('/products');
+        if (!isAuthPage && !isProductPage && pathname !== '/') {
             router.push('/');
         }
       }
@@ -103,79 +121,78 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only once on mount
 
-  // Effect for fetching data once user is loaded
+  // Effect for fetching data once on initial load
    useEffect(() => {
-    async function fetchData() {
-      // Allow unauthenticated users to see products
-      const shouldFetchData = user || pathname.startsWith('/products') || pathname === '/';
-      
-      if (!shouldFetchData) {
-        setLoading(false);
+    async function fetchPublicData() {
+        setLoading(true);
+        try {
+            const cropsCollectionRef = collection(db, "crops");
+            const cropsSnapshot = await getDocs(query(cropsCollectionRef, orderBy("name")));
+            const cropsList = cropsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Crop));
+            setCrops(cropsList);
+            
+            const farmersCollectionRef = collection(db, "users");
+            const farmersSnapshot = await getDocs(query(farmersCollectionRef, where("role", "==", "farmer")));
+            const farmersList = farmersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+            setFarmers(farmersList);
+        } catch (error) {
+            console.error("Error fetching public data:", error);
+        } finally {
+            setLoading(false);
+        }
+   }
+   fetchPublicData();
+  }, []);
+
+
+  // Effect for fetching user-specific data (orders)
+  useEffect(() => {
+    async function fetchUserOrders() {
+      if (!user) {
+        setOrders([]);
         return;
       }
-
-
       setLoading(true);
       try {
-        const cropsCollectionRef = collection(db, "crops");
-        const cropsSnapshot = await getDocs(query(cropsCollectionRef, orderBy("name")));
-        const cropsList = cropsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Crop));
-        setCrops(cropsList);
-        
-        const farmersCollectionRef = collection(db, "users");
-        const farmersSnapshot = await getDocs(query(farmersCollectionRef, where("role", "==", "farmer")));
-        const farmersList = farmersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-        setFarmers(farmersList);
-        
-        if (user) {
-            let ordersQuery;
-            if (user.role === 'buyer') {
-                ordersQuery = query(collection(db, "orders"), where("buyer.id", "==", user.id));
-            } else {
-                ordersQuery = query(collection(db, "orders"), where("farmerIds", "array-contains", user.id));
-            }
-            const ordersSnapshot = await getDocs(ordersQuery);
-            const ordersList = ordersSnapshot.docs.map(doc => {
-              const data = doc.data();
-              // Convert Firestore Timestamps to Dates for consistent handling
-              return { 
-                id: doc.id, 
-                ...data,
-                date: data.date instanceof Timestamp ? data.date.toDate() : data.date
-              } as Order;
-            });
-            
-            // Client-side sorting
-            ordersList.sort((a, b) => {
-                const dateA = new Date(a.date as string | Date);
-                const dateB = new Date(b.date as string | Date);
-                return dateB.getTime() - dateA.getTime();
-            });
-
-            setOrders(ordersList);
-
-            const storedCart = localStorage.getItem(`cropcart-cart-${user.id}`);
-            if (storedCart) setCart(JSON.parse(storedCart));
-            const storedWishlist = localStorage.getItem(`cropcart-wishlist-${user.id}`);
-            if (storedWishlist) setWishlist(JSON.parse(storedWishlist));
+        let ordersQuery;
+        if (user.role === 'buyer') {
+            ordersQuery = query(collection(db, "orders"), where("buyer.id", "==", user.id), orderBy("date", "desc"));
+        } else {
+            ordersQuery = query(collection(db, "orders"), where("farmerIds", "array-contains", user.id), orderBy("date", "desc"));
         }
+        const ordersSnapshot = await getDocs(ordersQuery);
+        const ordersList = ordersSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return { 
+            id: doc.id, 
+            ...data,
+            date: data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date)
+          } as Order;
+        });
+        setOrders(ordersList);
 
       } catch (error) {
-          console.error("Error fetching data:", error)
+          console.error("Error fetching orders:", error)
       } finally {
           setLoading(false);
       }
     }
-    fetchData();
-  }, [user, pathname]);
+    fetchUserOrders();
+  }, [user]);
+
 
    // Effect for persisting cart and wishlist to localStorage
   useEffect(() => {
     if (user?.id) {
       localStorage.setItem(`cropcart-cart-${user.id}`, JSON.stringify(cart));
+    }
+  }, [cart, user]);
+
+  useEffect(() => {
+    if (user?.id) {
       localStorage.setItem(`cropcart-wishlist-${user.id}`, JSON.stringify(wishlist));
     }
-  }, [cart, wishlist, user]);
+  }, [wishlist, user]);
 
 
   const login = (role: 'farmer' | 'buyer') => {
@@ -184,7 +201,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
+        const userId = user?.id;
         await auth.signOut();
+        // Clear local storage for the logged-out user
+        if (userId) {
+            localStorage.removeItem(`cropcart-cart-${userId}`);
+            localStorage.removeItem(`cropcart-wishlist-${userId}`);
+        }
         router.push('/');
     } catch (error) {
         console.error("Error signing out:", error);
@@ -234,6 +257,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addToCart = (crop: Crop, quantity: number = 1) => {
+    if (!user) {
+        router.push('/login?role=buyer');
+        return;
+    }
     setCart(prev => {
       const existingItem = prev.find(item => item.id === crop.id);
       if (existingItem) {
@@ -259,9 +286,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const clearCart = () => {
     setCart([]);
-    if (user) {
-      localStorage.removeItem(`cropcart-cart-${user.id}`);
-    }
   };
 
   const placeOrder = async (): Promise<Order> => {
@@ -288,7 +312,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const docRef = await addDoc(collection(db, "orders"), newOrderData);
         
         const newOrderForState: Order = { ...newOrderData, id: docRef.id, date: new Date() };
-        setOrders(prev => [newOrderForState, ...prev].sort((a, b) => new Date(b.date as string | Date).getTime() - new Date(a.date as string | Date).getTime()));
+        setOrders(prev => [newOrderForState, ...prev]);
         
         return newOrderForState;
     } catch (error) {
@@ -300,6 +324,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
 
   const addToWishlist = (crop: Crop) => {
+     if (!user) {
+        router.push('/login?role=buyer');
+        return;
+    }
     setWishlist(prev => {
       if (prev.find(item => item.id === crop.id)) {
         return prev;
