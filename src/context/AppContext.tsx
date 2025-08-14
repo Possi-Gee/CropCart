@@ -235,9 +235,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (user?.role !== 'farmer') return null;
     try {
         const docRef = await addDoc(collection(db, "crops"), cropData);
-        // Add the new crop to the local state with the new ID
         const newCrop = { ...cropData, id: docRef.id };
-        setCrops(prev => [...prev, newCrop]);
+        setCrops(prev => [...prev, newCrop].sort((a,b) => a.name.localeCompare(b.name)));
         return newCrop;
     } catch (error) {
         console.error("Error adding crop:", error);
