@@ -66,10 +66,9 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
 
  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsUploading(true);
+    let imageUrl = crop?.image; // Start with existing image if available
 
     try {
-        let imageUrl = crop?.image || "https://placehold.co/600x400.png";
-
         // Step 1: Handle image upload if a new file is provided
         if (values.image && values.image instanceof File) {
             if (!user) throw new Error("Authentication required for upload.");
@@ -78,14 +77,12 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
             const storageRef = ref(storage, `crop-images/${user.id}/${Date.now()}_${file.name}`);
             const snapshot = await uploadBytes(storageRef, file);
             imageUrl = await getDownloadURL(snapshot.ref);
-        } else if (typeof values.image === 'string') {
-            imageUrl = values.image;
         }
 
-        // Step 2: Prepare the final data object for Firestore
+        // Step 2: Prepare the final data object for Firestore, ensuring it has a valid image URL
         const finalData = {
             ...values,
-            image: imageUrl, // Ensure image is always the URL string
+            image: imageUrl || "https://placehold.co/600x400.png", // Fallback to placeholder
         };
 
         // Step 3: Save the data to Firestore
@@ -93,7 +90,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
             await updateCrop({ ...crop, ...finalData });
         } else {
             // The 'id' and 'farmerId' will be handled by the addCrop context function
-            await addCrop(finalData);
+            await addCrop(finalData as Omit<Crop, 'id' | 'farmerId'>);
         }
 
     } catch (error) {
