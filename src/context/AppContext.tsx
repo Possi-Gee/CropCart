@@ -269,7 +269,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 id: user.id,
                 name: user.name,
                 role: 'buyer',
-                contact: user.contact,
+                contact: user.contact || '',
                 avatarUrl: user.avatarUrl,
             },
             items: cart,
