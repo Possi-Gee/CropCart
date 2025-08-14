@@ -28,9 +28,9 @@ const formSchema = z.object({
   quantity: z.coerce.number().min(0, "Quantity cannot be negative."),
   unit: z.string().min(1, "Unit is required."),
   image: z.union([
-      z.string().url("Must be a valid image URL.").optional(),
-      z.any().refine(file => file instanceof File, "Image is required.").optional(),
-  ]),
+      z.string().url("Must be a valid image URL."),
+      z.any().refine(file => file instanceof File, "Image is required."),
+  ]).optional(),
   location: z.string().optional(),
   contact: z.string().optional(),
 });
@@ -68,49 +68,44 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
     setIsUploading(true);
     let imageUrl = crop?.image || "https://placehold.co/600x400.png";
 
-    // Check if a new file is being uploaded
-    if (values.image && values.image instanceof File) {
-      if (!user) {
-        console.error("No user found for image upload");
-        setIsUploading(false);
-        return;
-      }
-      try {
-        const file = values.image;
-        const storageRef = ref(storage, `crop-images/${user.id}/${Date.now()}_${file.name}`);
-        
-        const snapshot = await uploadBytes(storageRef, file);
-        imageUrl = await getDownloadURL(snapshot.ref);
-        
-      } catch (error) {
-        console.error("Image upload failed:", error);
-        setIsUploading(false);
-        return;
-      }
-    } else if (typeof values.image === 'string') {
-        imageUrl = values.image;
-    } else if (!imagePreview) {
-        // If there's no new file and no existing image, use placeholder
-        imageUrl = "https://placehold.co/600x400.png";
-    }
+    try {
+        // Step 1: Handle image upload if a new file is provided
+        if (values.image && values.image instanceof File) {
+            if (!user) {
+                console.error("No user found for image upload");
+                throw new Error("Authentication required for upload.");
+            }
+            const file = values.image;
+            const storageRef = ref(storage, `crop-images/${user.id}/${Date.now()}_${file.name}`);
+            const snapshot = await uploadBytes(storageRef, file);
+            imageUrl = await getDownloadURL(snapshot.ref);
+        } else if (typeof values.image === 'string') {
+            imageUrl = values.image;
+        }
 
-    // Prepare the final data object, ensuring image is the URL
-    const finalValues = {
-      ...values,
-      image: imageUrl,
-    };
+        // Step 2: Prepare the final data object for Firestore
+        const finalData = {
+            ...values,
+            image: imageUrl, // Ensure image is always the URL string
+        };
 
-    if (crop) {
-      // For updates, we pass the whole object including the ID
-      await updateCrop({ ...crop, ...finalValues });
-    } else {
-      // For additions, we pass the object without the id or farmerId (which is added by addCrop)
-      await addCrop(finalValues);
+        // Step 3: Save the data to Firestore
+        if (crop) {
+            await updateCrop({ ...crop, ...finalData });
+        } else {
+            // The 'id' and 'farmerId' will be handled by the addCrop context function
+            await addCrop(finalData);
+        }
+
+    } catch (error) {
+        console.error("Failed to save listing:", error);
+        // Optionally: show a toast notification to the user about the failure
+    } finally {
+        // Step 4: Reset state and call onFinished callback
+        setIsUploading(false);
+        onFinished();
     }
-    
-    setIsUploading(false);
-    onFinished();
-  }
+}
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
