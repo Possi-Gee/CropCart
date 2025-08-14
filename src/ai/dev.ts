@@ -1,4 +1,5 @@
+
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/farming-tips.ts';
+// All AI flows are imported here for development mode.
