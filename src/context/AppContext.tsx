@@ -24,7 +24,7 @@ interface AppContextType {
   updateCartQuantity: (cropId: string, quantity: number) => void;
   clearCart: () => void;
   cartTotal: number;
-  placeOrder: () => Promise<void>;
+  placeOrder: () => Promise<Order>;
   wishlist: Crop[];
   addToWishlist: (crop: Crop) => void;
   removeFromWishlist: (cropId: string) => void;
@@ -264,11 +264,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const placeOrder = async () => {
-    if (!user || cart.length === 0) return;
+  const placeOrder = async (): Promise<Order> => {
+    if (!user || cart.length === 0) {
+      throw new Error("User not logged in or cart is empty");
+    }
     try {
         const farmerIds = [...new Set(cart.map(item => item.farmerId))];
-        const newOrder: Omit<Order, 'id'> = {
+        const newOrderData: Omit<Order, 'id'> = {
             date: serverTimestamp(),
             buyer: {
                 id: user.id,
@@ -283,14 +285,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             farmerIds,
         };
         
-        const docRef = await addDoc(collection(db, "orders"), newOrder);
+        const docRef = await addDoc(collection(db, "orders"), newOrderData);
         
-        // Optimistically update the UI with a client-side date
-        const newOrderForState: Order = { ...newOrder, id: docRef.id, date: new Date() };
-
-        setOrders(prev => [newOrderForState, ...prev]);
-
-        clearCart();
+        const newOrderForState: Order = { ...newOrderData, id: docRef.id, date: new Date() };
+        setOrders(prev => [newOrderForState, ...prev].sort((a, b) => new Date(b.date as string | Date).getTime() - new Date(a.date as string | Date).getTime()));
+        
+        return newOrderForState;
     } catch (error) {
         console.error("Error placing order:", error);
         throw error;

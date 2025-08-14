@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function CheckoutPage() {
-  const { cart, cartTotal, placeOrder, user, loading } = useAppContext();
+  const { cart, cartTotal, placeOrder, user, loading, clearCart } = useAppContext();
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -35,6 +35,7 @@ export default function CheckoutPage() {
       // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 1500));
       await placeOrder();
+      clearCart();
       toast({
         title: "Order Placed Successfully!",
         description: "Thank you for your purchase. You can view your order in your account.",
@@ -57,7 +58,7 @@ export default function CheckoutPage() {
     })
   }
 
-  if (cart.length === 0) {
+  if (cart.length === 0 && !isLoading) {
     return (
       <div className="container mx-auto text-center py-20">
         <h1 className="text-2xl font-bold">Your cart is empty.</h1>
