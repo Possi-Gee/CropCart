@@ -24,10 +24,16 @@ function formatDate(date: any) {
     if (date instanceof Timestamp) {
         return format(date.toDate(), "MMM d, yyyy");
     }
-    if (typeof date === 'string') {
-        return format(new Date(date), "MMM d, yyyy");
+    if (date instanceof Date) {
+        return format(date, "MMM d, yyyy");
     }
-    if (typeof date.seconds === 'number') {
+    if (typeof date === 'string') {
+        const parsedDate = new Date(date);
+        if (!isNaN(parsedDate.getTime())) {
+            return format(parsedDate, "MMM d, yyyy");
+        }
+    }
+     if (typeof date.seconds === 'number') {
         return format(new Date(date.seconds * 1000), "MMM d, yyyy");
     }
     return 'Invalid Date';
@@ -155,4 +161,3 @@ export default function FarmerOrdersPage() {
     </div>
   );
 }
-
