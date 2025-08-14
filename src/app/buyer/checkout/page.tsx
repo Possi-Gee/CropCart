@@ -50,6 +50,13 @@ export default function CheckoutPage() {
     }
   };
 
+  const handleMobileMoneyConfirm = () => {
+    toast({
+        title: "Check your phone",
+        description: "Please wait to enter your MoMo PIN to finish the order.",
+    })
+  }
+
   if (cart.length === 0) {
     return (
       <div className="container mx-auto text-center py-20">
@@ -131,7 +138,10 @@ export default function CheckoutPage() {
                       </RadioGroup>
                       <div className="space-y-2">
                         <Label htmlFor="mobile-number">Phone Number</Label>
-                        <Input id="mobile-number" placeholder="024 123 4567" />
+                        <div className="flex items-center gap-2">
+                          <Input id="mobile-number" placeholder="024 123 4567" className="flex-grow"/>
+                          <Button type="button" onClick={handleMobileMoneyConfirm} variant="outline">OK</Button>
+                        </div>
                       </div>
                    </div>
                 </TabsContent>
