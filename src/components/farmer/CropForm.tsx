@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Separator } from "../ui/separator";
 import { storage } from "@/lib/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Upload, X } from "lucide-react";
@@ -49,6 +49,7 @@ const categories = ["Vegetable", "Fruit", "Grain", "Berries", "Herbs", "Fungi"];
 export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps) {
   const { addCrop, updateCrop, user } = useAppContext();
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
@@ -99,20 +100,45 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
     }
   }, [crop, form]);
 
+  const handleImageUpload = (file: File): Promise<string> => {
+    if (!user) return Promise.reject("User not authenticated");
+    
+    return new Promise((resolve, reject) => {
+      const storageRef = ref(storage, `crop-images/${user.id}/${Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on('state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(progress);
+        },
+        (error) => {
+          console.error("Upload failed:", error);
+          reject(error);
+        },
+        () => {
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            resolve(downloadURL);
+          }).catch(reject);
+        }
+      );
+    });
+  };
+
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user) {
       console.error("User not authenticated");
       return;
     }
     setIsUploading(true);
+    setUploadProgress(0);
 
     try {
       let imageUrl = crop?.image || '';
 
       if (imageFile) {
-        const storageRef = ref(storage, `crop-images/${user.id}/${Date.now()}_${imageFile.name}`);
-        await uploadBytes(storageRef, imageFile);
-        imageUrl = await getDownloadURL(storageRef);
+        imageUrl = await handleImageUpload(imageFile);
       } else if (!imageUrl && !crop) {
          imageUrl = "https://placehold.co/600x400.png";
       }
@@ -311,7 +337,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
                       </FormItem>
                     )}
                   />
-                   {isUploading && <Progress value={50} className="w-full mt-2" />}
+                   {isUploading && <Progress value={uploadProgress} className="w-full mt-2" />}
                 </div>
               </div>
 
