@@ -20,6 +20,7 @@ import Image from "next/image";
 import { Upload, X } from "lucide-react";
 import { Progress } from "../ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const formSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters long."),
@@ -36,6 +37,7 @@ const formSchema = z.object({
   unit: z.string().min(1, "Unit is required."),
   location: z.string().optional(),
   contact: z.string().optional(),
+  imageUrl: z.string().url("If providing a URL, it must be a valid URL.").optional(),
 });
 
 
@@ -54,8 +56,9 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [finalImageUrl, setFinalImageUrl] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageInputMethod, setImageInputMethod] = useState<'upload' | 'url'>('upload');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -68,6 +71,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
       unit: "kg",
       location: "",
       contact: "",
+      imageUrl: "",
     },
   });
 
@@ -82,8 +86,9 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
         unit: crop.unit,
         location: crop.location,
         contact: crop.contact,
+        imageUrl: imageInputMethod === 'url' ? crop.image : '',
       });
-      setImageUrl(crop.image);
+      setFinalImageUrl(crop.image);
       setImagePreview(crop.image);
     } else {
         form.reset({
@@ -95,72 +100,97 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
             unit: "kg",
             location: "",
             contact: "",
+            imageUrl: "",
         });
-        setImageUrl(null);
+        setFinalImageUrl(null);
         setImagePreview(null);
     }
-  }, [crop, form]);
-
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && user) {
-      // Show preview immediately
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-
-      // Start upload
-      setIsUploading(true);
-      setUploadProgress(0);
-      const storageRef = ref(storage, `crop-images/${user.id}/${Date.now()}_${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on('state_changed',
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadProgress(progress);
-        },
-        (error) => {
-          console.error("Upload failed:", error);
-          setIsUploading(false);
-          setImagePreview(crop?.image || null); // Revert to original image on fail
-          toast({ title: "Image Upload Failed", description: "Please try uploading the image again.", variant: "destructive" });
-        },
-        () => {
-          // Upload completed successfully, now we get the download URL
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            setImageUrl(downloadURL);
-            setIsUploading(false);
-            toast({ title: "Image Uploaded", description: "You can now save your listing." });
-          });
-        }
-      );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [crop, form.reset]);
+  
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    form.setValue('imageUrl', url);
+    if (z.string().url().safeParse(url).success) {
+      setFinalImageUrl(url);
+      setImagePreview(url);
+    } else {
+      setFinalImageUrl(null);
+      setImagePreview(null);
     }
   };
 
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    setFinalImageUrl(null);
+
+    const storageRef = ref(storage, `crop-images/${user.id}/${Date.now()}_${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    uploadTask.on('state_changed',
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setUploadProgress(progress);
+      },
+      (error) => {
+        console.error("Upload failed:", error);
+        setIsUploading(false);
+        setImagePreview(crop?.image || null);
+        setFinalImageUrl(crop?.image || null);
+        toast({ title: "Image Upload Failed", description: "Please try uploading the image again.", variant: "destructive" });
+      },
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          setFinalImageUrl(downloadURL);
+          setIsUploading(false);
+          toast({ title: "Image Uploaded", description: "You can now save your listing." });
+        });
+      }
+    );
+  };
+
   const removeImage = () => {
-    setImageUrl(null);
+    setFinalImageUrl(null);
     setImagePreview(null);
+    form.setValue('imageUrl', '');
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user) {
-      toast({ title: "Authentication Error", description: "You must be logged in to create a listing.", variant: "destructive" });
+      toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
       return;
     }
-    if (!imageUrl) {
-       toast({ title: "Missing Image", description: "Please upload an image for the listing.", variant: "destructive" });
-       return
+    
+    let imageUrlToSave = finalImageUrl;
+    if (imageInputMethod === 'url') {
+      const urlValidation = z.string().url().safeParse(values.imageUrl);
+      if (!urlValidation.success) {
+        toast({ title: "Invalid URL", description: "Please provide a valid image URL.", variant: "destructive" });
+        return;
+      }
+      imageUrlToSave = values.imageUrl;
+    }
+
+    if (!imageUrlToSave) {
+       toast({ title: "Missing Image", description: "Please upload an image or provide a valid URL.", variant: "destructive" });
+       return;
     }
 
     setIsSubmitting(true);
     try {
+      const { imageUrl, ...restOfValues } = values;
       const finalData: Omit<Crop, 'id'> = {
-        ...values,
-        image: imageUrl, // Use the uploaded image URL
+        ...restOfValues,
+        image: imageUrlToSave,
         farmerId: user.id
       };
 
@@ -300,30 +330,61 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
                 </div>
 
                 <div className="space-y-2">
-                   <FormLabel htmlFor="image-upload">Product Image</FormLabel>
-                  {imagePreview ? (
-                    <div className="relative group">
-                       <Image src={imagePreview} alt="Product preview" width={500} height={500} className="rounded-lg object-cover w-full aspect-square" />
-                       <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={removeImage} disabled={isUploading}>
-                         <X className="h-4 w-4" />
-                         <span className="sr-only">Remove Image</span>
-                       </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center w-full">
-                        <label htmlFor="image-upload" className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted">
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                                <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                                <p className="text-xs text-muted-foreground">PNG, JPG or GIF</p>
+                  <FormLabel>Product Image</FormLabel>
+                  <Tabs<string> defaultValue="upload" onValueChange={(value) => setImageInputMethod(value as 'upload' | 'url')}>
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="upload">Upload Image</TabsTrigger>
+                        <TabsTrigger value="url">Image URL</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="upload" className="pt-2">
+                         {imagePreview && imageInputMethod === 'upload' ? (
+                            <div className="relative group">
+                              <Image src={imagePreview} alt="Product preview" width={500} height={500} className="rounded-lg object-cover w-full aspect-square" />
+                              <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={removeImage} disabled={isUploading}>
+                                <X className="h-4 w-4" />
+                                <span className="sr-only">Remove Image</span>
+                              </Button>
                             </div>
-                            <FormControl>
-                                <Input id="image-upload" type="file" className="hidden" onChange={handleImageChange} accept="image/png, image/jpeg, image/gif" disabled={isUploading} />
-                            </FormControl>
-                        </label>
-                    </div> 
-                  )}
-                   {isUploading && <Progress value={uploadProgress} className="w-full mt-2" />}
+                          ) : (
+                            <div className="flex items-center justify-center w-full">
+                                <label htmlFor="image-upload" className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted">
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
+                                        <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                                        <p className="text-xs text-muted-foreground">PNG, JPG or GIF</p>
+                                    </div>
+                                    <FormControl>
+                                        <Input id="image-upload" type="file" className="hidden" onChange={handleFileChange} accept="image/png, image/jpeg, image/gif" disabled={isUploading} />
+                                    </FormControl>
+                                </label>
+                            </div> 
+                          )}
+                          {isUploading && <Progress value={uploadProgress} className="w-full mt-2" />}
+                    </TabsContent>
+                    <TabsContent value="url" className="pt-2 space-y-2">
+                         {imagePreview && imageInputMethod === 'url' && (
+                            <div className="relative group">
+                              <Image src={imagePreview} alt="Product preview" width={500} height={500} className="rounded-lg object-cover w-full aspect-square" />
+                               <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={removeImage}>
+                                 <X className="h-4 w-4" />
+                               </Button>
+                            </div>
+                         )}
+                          <FormField
+                            control={form.control}
+                            name="imageUrl"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Image URL</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="https://example.com/image.png" {...field} onChange={handleUrlChange} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                    </TabsContent>
+                  </Tabs>
                 </div>
               </div>
 
@@ -338,3 +399,4 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
     </Card>
   );
 }
+
