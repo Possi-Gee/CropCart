@@ -66,15 +66,14 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
 
  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsUploading(true);
-    let imageUrl = crop?.image || "https://placehold.co/600x400.png";
 
     try {
+        let imageUrl = crop?.image || "https://placehold.co/600x400.png";
+
         // Step 1: Handle image upload if a new file is provided
         if (values.image && values.image instanceof File) {
-            if (!user) {
-                console.error("No user found for image upload");
-                throw new Error("Authentication required for upload.");
-            }
+            if (!user) throw new Error("Authentication required for upload.");
+            
             const file = values.image;
             const storageRef = ref(storage, `crop-images/${user.id}/${Date.now()}_${file.name}`);
             const snapshot = await uploadBytes(storageRef, file);
@@ -187,7 +186,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Price (¢)</FormLabel>
-                          <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
+                          <FormControl><Input type="number" step="0.01" placeholder="e.g. 15.00" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -198,7 +197,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Available</FormLabel>
-                          <FormControl><Input type="number" {...field} /></FormControl>
+                          <FormControl><Input type="number" placeholder="e.g. 50" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
