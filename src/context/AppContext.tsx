@@ -15,7 +15,7 @@ interface AppContextType {
   logout: () => void;
   updateUser: (user: Partial<User>) => Promise<void>;
   crops: Crop[];
-  addCrop: (crop: Omit<Crop, 'id' | 'farmerId'>) => Promise<void>;
+  addCrop: (crop: Omit<Crop, 'id'>) => Promise<void>;
   updateCrop: (crop: Crop) => Promise<void>;
   deleteCrop: (cropId: string) => Promise<void>;
   cart: CartItem[];
@@ -156,20 +156,24 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       try {
         let ordersQuery;
         if (user.role === 'buyer') {
-             ordersQuery = query(collection(db, "orders"), where("buyer.id", "==", user.id));
+             ordersQuery = query(collection(db, "orders"), where("buyer.id", "==", user.id), orderBy("date", "desc"));
         } else {
+            // Firestore requires a composite index for this query.
+            // As a workaround, we fetch and then sort client-side.
             ordersQuery = query(collection(db, "orders"), where("farmerIds", "array-contains", user.id));
         }
         const ordersSnapshot = await getDocs(ordersQuery);
-        const ordersList = ordersSnapshot.docs.map(doc => {
+        let ordersList = ordersSnapshot.docs.map(doc => {
           const data = doc.data();
           // Safely handle date conversion
           const date = data.date ? (data.date as Timestamp).toDate() : new Date();
           return { id: doc.id, ...data, date } as Order;
         });
 
-        // Sort orders by date client-side
-        ordersList.sort((a, b) => (b.date as Date).getTime() - (a.date as Date).getTime());
+        // Sort orders by date client-side if they are for a farmer
+        if (user.role === 'farmer') {
+            ordersList.sort((a, b) => (b.date as Date).getTime() - (a.date as Date).getTime());
+        }
 
         setOrders(ordersList);
 
@@ -227,12 +231,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const addCrop = async (cropData: Omit<Crop, 'id' | 'farmerId'>) => {
+  const addCrop = async (cropData: Omit<Crop, 'id'>) => {
     if (user?.role !== 'farmer') return;
     try {
-        const newCropData = { ...cropData, farmerId: user.id };
-        const docRef = await addDoc(collection(db, "crops"), newCropData);
-        setCrops(prev => [...prev, { ...newCropData, id: docRef.id }]);
+        const docRef = await addDoc(collection(db, "crops"), cropData);
+        setCrops(prev => [...prev, { ...cropData, id: docRef.id }]);
     } catch (error) {
         console.error("Error adding crop:", error);
     }
@@ -240,7 +243,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const updateCrop = async (updatedCrop: Crop) => {
     try {
-        // The object passed to updateDoc should not contain the 'id' field
         const { id, ...cropData } = updatedCrop;
         const cropDocRef = doc(db, "crops", id);
         await updateDoc(cropDocRef, cropData);
@@ -397,3 +399,5 @@ export const useAppContext = () => {
   }
   return context;
 };
+
+    

@@ -92,9 +92,9 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
     }
     setIsUploading(true);
 
-    let imageUrl = crop?.image || '';
-
     try {
+      let imageUrl = crop?.image || '';
+
       if (imageFile) {
         const storageRef = ref(storage, `crop-images/${user.id}/${Date.now()}_${imageFile.name}`);
         await uploadBytes(storageRef, imageFile);
