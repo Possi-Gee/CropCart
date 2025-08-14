@@ -62,35 +62,50 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
       category: crop?.category ?? undefined,
       quantity: crop?.quantity ?? ('' as any),
       unit: crop?.unit ?? "kg",
-      image: undefined,
       location: crop?.location ?? "",
       contact: crop?.contact ?? "",
+      image: undefined,
     },
   });
 
   useEffect(() => {
-    if (crop?.image) {
+    if (crop) {
+      form.reset({
+        name: crop.name,
+        price: crop.price,
+        description: crop.description,
+        category: crop.category,
+        quantity: crop.quantity,
+        unit: crop.unit,
+        location: crop.location,
+        contact: crop.contact,
+        image: undefined,
+      });
       setImagePreview(crop.image);
     }
-  }, [crop]);
+  }, [crop, form]);
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: z.infer<typeof formSchema>>) => {
     if (!user) {
       console.error("User not authenticated");
       return;
     }
     setIsUploading(true);
 
-    try {
-      let imageUrl = crop?.image || "https://placehold.co/600x400.png";
+    let imageUrl = crop?.image || '';
 
+    try {
       if (imageFile) {
         const storageRef = ref(storage, `crop-images/${user.id}/${Date.now()}_${imageFile.name}`);
         await uploadBytes(storageRef, imageFile);
         imageUrl = await getDownloadURL(storageRef);
       }
       
-      const finalData: Omit<Crop, 'id' | 'farmerId'> = {
+      if (!imageUrl) {
+        imageUrl = "https://placehold.co/600x400.png";
+      }
+
+      const finalData = {
         name: values.name,
         price: values.price,
         description: values.description,
@@ -103,9 +118,9 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
       };
 
       if (crop) {
-        await updateCrop({ ...finalData, id: crop.id, farmerId: crop.farmerId });
+        await updateCrop({ ...crop, ...finalData });
       } else {
-        await addCrop(finalData);
+        await addCrop({ ...finalData, farmerId: user.id });
       }
     } catch (error) {
       console.error("Failed to save listing:", error);
