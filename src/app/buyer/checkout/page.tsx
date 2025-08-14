@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { CreditCard, Bot, Smartphone } from "lucide-react";
+import { CreditCard, Bot, Smartphone, Truck } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
@@ -97,7 +97,7 @@ export default function CheckoutPage() {
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="card"><CreditCard className="mr-2 h-4 w-4" />Card</TabsTrigger>
                   <TabsTrigger value="mobile"><Smartphone className="mr-2 h-4 w-4" />Mobile</TabsTrigger>
-                  <TabsTrigger value="telecel">Telecel</TabsTrigger>
+                  <TabsTrigger value="delivery"><Truck className="mr-2 h-4 w-4" />On Delivery</TabsTrigger>
                 </TabsList>
                 <TabsContent value="card" className="pt-4">
                    <div className="space-y-4">
@@ -135,12 +135,9 @@ export default function CheckoutPage() {
                       </div>
                    </div>
                 </TabsContent>
-                 <TabsContent value="telecel" className="pt-4">
-                   <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="telecel-number">Telecel Pay Number</Label>
-                        <Input id="telecel-number" placeholder="050 123 4567" />
-                      </div>
+                 <TabsContent value="delivery" className="pt-4">
+                   <div className="text-center text-muted-foreground p-4 border border-dashed rounded-md">
+                     You will pay the courier in cash or with mobile money when your order arrives.
                    </div>
                 </TabsContent>
               </Tabs>
@@ -148,7 +145,7 @@ export default function CheckoutPage() {
                   <Bot className="h-6 w-6 text-primary mt-1"/>
                   <div className="text-sm text-muted-foreground">
                     <p className="font-semibold text-foreground">This is a simulated payment.</p>
-                    <p>No real transaction will occur. You can use any dummy data to complete the checkout.</p>
+                    <p>No real transaction will occur. For Card/Mobile methods, you can use any dummy data to complete the checkout.</p>
                   </div>
                  </div>
             </CardContent>
@@ -190,7 +187,7 @@ export default function CheckoutPage() {
                 <span>¢{cartTotal.toFixed(2)}</span>
               </div>
               <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
-                {isLoading ? "Processing..." : `Pay ¢${cartTotal.toFixed(2)}`}
+                {isLoading ? "Processing..." : `Place Order (¢${cartTotal.toFixed(2)})`}
               </Button>
             </CardFooter>
           </Card>
