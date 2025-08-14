@@ -235,7 +235,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (user?.role !== 'farmer') return;
     try {
         const docRef = await addDoc(collection(db, "crops"), cropData);
-        setCrops(prev => [...prev, { ...cropData, id: docRef.id }]);
+        // Add the new crop to the local state with the new ID
+        const newCrop = { ...cropData, id: docRef.id };
+        setCrops(prev => [...prev, newCrop]);
     } catch (error) {
         console.error("Error adding crop:", error);
     }
@@ -399,5 +401,7 @@ export const useAppContext = () => {
   }
   return context;
 };
+
+    
 
     
