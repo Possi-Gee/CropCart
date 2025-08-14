@@ -24,7 +24,7 @@ const formSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters long."),
   price: z.preprocess(
     (a) => (a === '' ? undefined : a),
-    z.coerce.number({invalid_type_error: "Price is required."}).min(0.01, "Price must be positive.")
+    z.coerce.number({invalid_type_error: "Price is required."}).min(0, "Price must be non-negative.")
   ),
   description: z.string().min(10, "Description must be at least 10 characters long."),
   category: z.string({required_error: "Please select a category."}),
@@ -34,8 +34,8 @@ const formSchema = z.object({
   ),
   unit: z.string().min(1, "Unit is required."),
   image: z.union([
-      z.string().url("Must be a valid image URL."),
-      z.any().refine(file => file instanceof File, "Image is required."),
+      z.string().url("Must be a valid image URL.").optional(),
+      z.any().refine(file => file instanceof File, "Image is required.").optional(),
   ]).optional(),
   location: z.string().optional(),
   contact: z.string().optional(),
@@ -72,9 +72,9 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
 
  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsUploading(true);
-    let imageUrl = crop?.image; 
-
     try {
+        let imageUrl = crop?.image; 
+
         if (values.image && values.image instanceof File) {
             if (!user) throw new Error("Authentication required for upload.");
             
@@ -84,15 +84,22 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
             imageUrl = await getDownloadURL(snapshot.ref);
         }
 
-        const finalData = {
-            ...values,
+        const finalData: Omit<Crop, 'id' | 'farmerId'> = {
+            name: values.name,
+            price: values.price!,
+            description: values.description,
+            category: values.category!,
+            quantity: values.quantity!,
+            unit: values.unit,
             image: imageUrl || "https://placehold.co/600x400.png",
+            location: values.location || "",
+            contact: values.contact || "",
         };
 
         if (crop) {
-            await updateCrop({ ...crop, ...finalData });
+            await updateCrop({ ...finalData, id: crop.id, farmerId: crop.farmerId });
         } else {
-            await addCrop(finalData as Omit<Crop, 'id' | 'farmerId'>);
+            await addCrop(finalData);
         }
 
     } catch (error) {

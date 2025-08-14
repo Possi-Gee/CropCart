@@ -24,7 +24,7 @@ interface AppContextType {
   updateCartQuantity: (cropId: string, quantity: number) => void;
   clearCart: () => void;
   cartTotal: number;
-  placeOrder: () => Promise<Order>;
+  placeOrder: () => Promise<Order | null>;
   wishlist: Crop[];
   addToWishlist: (crop: Crop) => void;
   removeFromWishlist: (cropId: string) => void;
@@ -185,16 +185,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
    // Effect for persisting cart and wishlist to localStorage
   useEffect(() => {
-    if (user?.id) {
+    if(!loading && user?.id) {
       localStorage.setItem(`cropcart-cart-${user.id}`, JSON.stringify(cart));
     }
-  }, [cart, user]);
+  }, [cart, user, loading]);
 
   useEffect(() => {
-    if (user?.id) {
+    if(!loading && user?.id) {
       localStorage.setItem(`cropcart-wishlist-${user.id}`, JSON.stringify(wishlist));
     }
-  }, [wishlist, user]);
+  }, [wishlist, user, loading]);
 
 
   const login = (role: 'farmer' | 'buyer') => {
@@ -292,7 +292,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setCart([]);
   };
 
-  const placeOrder = async (): Promise<Order> => {
+  const placeOrder = async (): Promise<Order | null> => {
     if (!user || cart.length === 0) {
       throw new Error("User not logged in or cart is empty");
     }
