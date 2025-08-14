@@ -206,7 +206,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a category" />
-                            </Trigger>
+                            </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             {categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
