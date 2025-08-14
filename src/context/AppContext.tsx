@@ -9,7 +9,7 @@ import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp, query, where, orderBy, Timestamp } from 'firebase/firestore';
 
 interface AppContextType {
-  user: User | null;
+  user: (User & { email?: string }) | null;
   firebaseUser: FirebaseUser | null;
   login: (role: 'farmer' | 'buyer') => void; // This will be removed, login is handled by auth pages
   logout: () => void;
@@ -38,7 +38,7 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<(User & { email?: string }) | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [crops, setCrops] = useState<Crop[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -60,7 +60,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         try {
           const userDocSnap = await getDoc(userDocRef);
           if (userDocSnap.exists()) {
-            const userData = { id: userDocSnap.id, ...userDocSnap.data() } as User;
+            const userData = { id: userDocSnap.id, ...userDocSnap.data(), email: fbUser.email } as (User & { email?: string });
             setUser(userData);
             
             const publicRoutes = ['/login', '/register', '/'];
@@ -92,7 +92,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setFarmers([]);
         // Only redirect if user is not on a public page
         const isAuthPage = ['/login', '/register'].some(p => pathname.startsWith(p));
-        if (!isAuthPage && !pathname.startsWith('/products') && pathname !== '/') {
+        const isCheckoutPage = pathname.startsWith('/buyer/checkout');
+        if (!isAuthPage && !pathname.startsWith('/products') && !isCheckoutPage && pathname !== '/') {
             router.push('/');
         }
       }
@@ -105,10 +106,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   // Effect for fetching data once user is loaded
    useEffect(() => {
     async function fetchData() {
-      if (!user && !pathname.startsWith('/products')) {
+      // Allow unauthenticated users to see products
+      const shouldFetchData = user || pathname.startsWith('/products') || pathname === '/';
+      
+      if (!shouldFetchData) {
         setLoading(false);
         return;
       }
+
 
       setLoading(true);
       try {

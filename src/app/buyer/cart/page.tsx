@@ -9,32 +9,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateCartQuantity, cartTotal, placeOrder } = useAppContext();
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const { cart, removeFromCart, updateCartQuantity, cartTotal } = useAppContext();
+  const router = useRouter();
 
-  const handlePlaceOrder = async () => {
-    setIsLoading(true);
-    try {
-      await placeOrder();
-      toast({
-        title: "Order Placed!",
-        description: "Thank you for your purchase. Your order is being processed.",
-      });
-    } catch (error) {
-       toast({
-        title: "Order Failed",
-        description: "There was a problem placing your order. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-        setIsLoading(false);
-    }
+  const handleCheckout = () => {
+    router.push('/buyer/checkout');
   }
 
   return (
@@ -120,8 +103,8 @@ export default function CartPage() {
                   <span>Total</span>
                   <span>¢{cartTotal.toFixed(2)}</span>
                 </div>
-                <Button onClick={handlePlaceOrder} className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
-                  {isLoading ? "Placing Order..." : "Place Order"}
+                <Button onClick={handleCheckout} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                  Proceed to Checkout
                 </Button>
               </CardContent>
             </Card>
