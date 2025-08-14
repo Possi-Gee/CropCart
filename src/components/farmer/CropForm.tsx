@@ -99,13 +99,11 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
         const storageRef = ref(storage, `crop-images/${user.id}/${Date.now()}_${imageFile.name}`);
         await uploadBytes(storageRef, imageFile);
         imageUrl = await getDownloadURL(storageRef);
+      } else if (!crop) { // Only set placeholder for new crops without an image
+         imageUrl = "https://placehold.co/600x400.png";
       }
       
-      if (!imageUrl && !crop) {
-        imageUrl = "https://placehold.co/600x400.png";
-      }
-
-      const finalData: Omit<Crop, 'id'> = {
+      const finalData = {
         name: values.name,
         price: values.price,
         description: values.description,
@@ -314,5 +312,3 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
     </Card>
   );
 }
-
-    
