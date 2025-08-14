@@ -19,6 +19,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Upload, X } from "lucide-react";
 import { Progress } from "../ui/progress";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters long."),
@@ -33,7 +34,6 @@ const formSchema = z.object({
     z.number({ required_error: "Quantity is required." }).min(0, "Quantity cannot be negative.")
   ),
   unit: z.string().min(1, "Unit is required."),
-  image: z.any().optional(),
   location: z.string().optional(),
   contact: z.string().optional(),
 });
@@ -49,10 +49,13 @@ const categories = ["Vegetable", "Fruit", "Grain", "Berries", "Herbs", "Fungi"];
 
 export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps) {
   const { addCrop, updateCrop, user } = useAppContext();
-  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -65,7 +68,6 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
       unit: "kg",
       location: "",
       contact: "",
-      image: undefined,
     },
   });
 
@@ -80,10 +82,9 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
         unit: crop.unit,
         location: crop.location,
         contact: crop.contact,
-        image: undefined,
       });
+      setImageUrl(crop.image);
       setImagePreview(crop.image);
-      setImageFile(null);
     } else {
         form.reset({
             name: "",
@@ -94,17 +95,26 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
             unit: "kg",
             location: "",
             contact: "",
-            image: undefined,
         });
+        setImageUrl(null);
         setImagePreview(null);
-        setImageFile(null);
     }
   }, [crop, form]);
 
-  const handleImageUpload = (file: File): Promise<string> => {
-    if (!user) return Promise.reject("User not authenticated");
-    
-    return new Promise((resolve, reject) => {
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && user) {
+      // Show preview immediately
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      // Start upload immediately
+      setIsUploading(true);
+      setUploadProgress(0);
       const storageRef = ref(storage, `crop-images/${user.id}/${Date.now()}_${file.name}`);
       const uploadTask = uploadBytesResumable(storageRef, file);
 
@@ -115,81 +125,61 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
         },
         (error) => {
           console.error("Upload failed:", error);
-          reject(error);
+          setIsUploading(false);
+          setImagePreview(null);
+          toast({ title: "Image Upload Failed", description: "Please try uploading the image again.", variant: "destructive" });
         },
         () => {
           getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            resolve(downloadURL);
-          }).catch((error) => {
-            reject(error);
+            setImageUrl(downloadURL);
+            setIsUploading(false);
+            toast({ title: "Image Uploaded", description: "You can now save your listing." });
           });
         }
       );
-    });
+    }
   };
 
+  const removeImage = () => {
+    setImageUrl(null);
+    setImagePreview(null);
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user) {
-      console.error("User not authenticated");
+      toast({ title: "Authentication Error", description: "You must be logged in to create a listing.", variant: "destructive" });
       return;
     }
-    setIsSaving(true);
-    setUploadProgress(0);
+    if (!imageUrl && !crop) {
+       toast({ title: "Missing Image", description: "Please upload an image for the listing.", variant: "destructive" });
+       return
+    }
 
+    setIsSubmitting(true);
     try {
-      let imageUrl = crop?.image || '';
-
-      if (imageFile) {
-        imageUrl = await handleImageUpload(imageFile);
-      } else if (!imageUrl && !crop) {
-         imageUrl = "https://placehold.co/600x400.png";
-      }
-      
       const finalData: Omit<Crop, 'id'> = {
-        name: values.name,
-        price: values.price,
-        description: values.description,
-        category: values.category,
-        quantity: values.quantity,
-        unit: values.unit,
-        location: values.location || "",
-        contact: values.contact || "",
-        image: imageUrl,
+        ...values,
+        image: imageUrl || "https://placehold.co/600x400.png", // Fallback, though we check above
         farmerId: user.id
       };
 
       if (crop) {
         await updateCrop({ ...finalData, id: crop.id });
+        toast({ title: "Listing Updated!", description: "Your product has been successfully updated." });
       } else {
         await addCrop(finalData);
+        toast({ title: "Listing Created!", description: "Your new product is now live." });
       }
       onFinished();
 
     } catch (error) {
       console.error("Failed to save listing:", error);
+      toast({ title: "Save Failed", description: "There was a problem saving your listing. Please try again.", variant: "destructive" });
     } finally {
-      setIsSaving(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const removeImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
-    form.setValue("image", undefined);
-  };
 
   return (
     <Card className="border-0 shadow-none md:border md:shadow-sm">
@@ -327,28 +317,19 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
                                 <p className="text-xs text-muted-foreground">PNG, JPG or GIF</p>
                             </div>
                             <FormControl>
-                                <Input id="image-upload" type="file" className="hidden" onChange={handleImageChange} accept="image/png, image/jpeg, image/gif" />
+                                <Input id="image-upload" type="file" className="hidden" onChange={handleImageChange} accept="image/png, image/jpeg, image/gif" disabled={isUploading} />
                             </FormControl>
                         </label>
                     </div> 
                   )}
-                   <FormField
-                    control={form.control}
-                    name="image"
-                    render={() => (
-                      <FormItem>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                   {isSaving && imageFile && <Progress value={uploadProgress} className="w-full mt-2" />}
+                   {isUploading && <Progress value={uploadProgress} className="w-full mt-2" />}
                 </div>
               </div>
 
                <Separator className="my-6" />
 
-              <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isSaving}>
-                {isSaving ? "Saving..." : crop ? "Save Changes" : "Create Listing"}
+              <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isUploading || isSubmitting}>
+                {isUploading ? "Uploading Image..." : isSubmitting ? "Saving..." : crop ? "Save Changes" : "Create Listing"}
               </Button>
             </form>
           </Form>
@@ -356,3 +337,4 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
     </Card>
   );
 }
+
