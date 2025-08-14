@@ -115,7 +115,6 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
         },
         (error) => {
           console.error("Upload failed:", error);
-          setIsSaving(false);
           reject(error);
         },
         () => {
@@ -123,7 +122,6 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
             resolve(downloadURL);
           }).catch((error) => {
             reject(error);
-            setIsSaving(false);
           });
         }
       );
@@ -171,8 +169,6 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
     } catch (error) {
       console.error("Failed to save listing:", error);
     } finally {
-      // onFinished is now called inside try block on success
-      // In case of error, we leave the form open for correction
       setIsSaving(false);
     }
   };
