@@ -112,7 +112,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
       };
       reader.readAsDataURL(file);
 
-      // Start upload immediately
+      // Start upload
       setIsUploading(true);
       setUploadProgress(0);
       const storageRef = ref(storage, `crop-images/${user.id}/${Date.now()}_${file.name}`);
@@ -126,10 +126,11 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
         (error) => {
           console.error("Upload failed:", error);
           setIsUploading(false);
-          setImagePreview(null);
+          setImagePreview(crop?.image || null); // Revert to original image on fail
           toast({ title: "Image Upload Failed", description: "Please try uploading the image again.", variant: "destructive" });
         },
         () => {
+          // Upload completed successfully, now we get the download URL
           getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
             setImageUrl(downloadURL);
             setIsUploading(false);
@@ -150,7 +151,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
       toast({ title: "Authentication Error", description: "You must be logged in to create a listing.", variant: "destructive" });
       return;
     }
-    if (!imageUrl && !crop) {
+    if (!imageUrl) {
        toast({ title: "Missing Image", description: "Please upload an image for the listing.", variant: "destructive" });
        return
     }
@@ -159,7 +160,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
     try {
       const finalData: Omit<Crop, 'id'> = {
         ...values,
-        image: imageUrl || "https://placehold.co/600x400.png", // Fallback, though we check above
+        image: imageUrl, // Use the uploaded image URL
         farmerId: user.id
       };
 
@@ -303,7 +304,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
                   {imagePreview ? (
                     <div className="relative group">
                        <Image src={imagePreview} alt="Product preview" width={500} height={500} className="rounded-lg object-cover w-full aspect-square" />
-                       <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={removeImage}>
+                       <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={removeImage} disabled={isUploading}>
                          <X className="h-4 w-4" />
                          <span className="sr-only">Remove Image</span>
                        </Button>
@@ -337,4 +338,3 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
     </Card>
   );
 }
-
