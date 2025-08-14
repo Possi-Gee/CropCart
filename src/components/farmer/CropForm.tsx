@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -48,7 +49,7 @@ const categories = ["Vegetable", "Fruit", "Grain", "Berries", "Herbs", "Fungi"];
 
 export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps) {
   const { addCrop, updateCrop, user } = useAppContext();
-  const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -114,12 +115,16 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
         },
         (error) => {
           console.error("Upload failed:", error);
+          setIsSaving(false);
           reject(error);
         },
         () => {
           getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
             resolve(downloadURL);
-          }).catch(reject);
+          }).catch((error) => {
+            reject(error);
+            setIsSaving(false);
+          });
         }
       );
     });
@@ -131,7 +136,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
       console.error("User not authenticated");
       return;
     }
-    setIsUploading(true);
+    setIsSaving(true);
     setUploadProgress(0);
 
     try {
@@ -161,11 +166,14 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
       } else {
         await addCrop(finalData);
       }
+      onFinished();
+
     } catch (error) {
       console.error("Failed to save listing:", error);
     } finally {
-      setIsUploading(false);
-      onFinished();
+      // onFinished is now called inside try block on success
+      // In case of error, we leave the form open for correction
+      setIsSaving(false);
     }
   };
 
@@ -337,14 +345,14 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
                       </FormItem>
                     )}
                   />
-                   {isUploading && <Progress value={uploadProgress} className="w-full mt-2" />}
+                   {isSaving && imageFile && <Progress value={uploadProgress} className="w-full mt-2" />}
                 </div>
               </div>
 
                <Separator className="my-6" />
 
-              <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isUploading}>
-                {isUploading ? "Saving..." : crop ? "Save Changes" : "Create Listing"}
+              <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isSaving}>
+                {isSaving ? "Saving..." : crop ? "Save Changes" : "Create Listing"}
               </Button>
             </form>
           </Form>

@@ -15,7 +15,7 @@ interface AppContextType {
   logout: () => void;
   updateUser: (user: Partial<User>) => Promise<void>;
   crops: Crop[];
-  addCrop: (crop: Omit<Crop, 'id'>) => Promise<void>;
+  addCrop: (crop: Omit<Crop, 'id'>) => Promise<Crop | null>;
   updateCrop: (crop: Crop) => Promise<void>;
   deleteCrop: (cropId: string) => Promise<void>;
   cart: CartItem[];
@@ -231,15 +231,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const addCrop = async (cropData: Omit<Crop, 'id'>) => {
-    if (user?.role !== 'farmer') return;
+  const addCrop = async (cropData: Omit<Crop, 'id'>): Promise<Crop | null> => {
+    if (user?.role !== 'farmer') return null;
     try {
         const docRef = await addDoc(collection(db, "crops"), cropData);
         // Add the new crop to the local state with the new ID
         const newCrop = { ...cropData, id: docRef.id };
         setCrops(prev => [...prev, newCrop]);
+        return newCrop;
     } catch (error) {
         console.error("Error adding crop:", error);
+        return null;
     }
   };
 
@@ -401,7 +403,3 @@ export const useAppContext = () => {
   }
   return context;
 };
-
-    
-
-    
