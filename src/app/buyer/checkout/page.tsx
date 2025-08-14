@@ -9,16 +9,18 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { CreditCard, Bot } from "lucide-react";
+import { CreditCard, Bot, Smartphone } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function CheckoutPage() {
   const { cart, cartTotal, placeOrder, user, loading } = useAppContext();
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("card");
 
   useEffect(() => {
     if (!loading && cart.length === 0) {
@@ -90,30 +92,59 @@ export default function CheckoutPage() {
               <CardTitle>Payment Method</CardTitle>
               <CardDescription>All transactions are secure and encrypted.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <CreditCard className="w-8 h-8 text-muted-foreground" />
-                  <div className="flex gap-2">
-                    <div className="w-12 h-8 rounded-md bg-muted flex items-center justify-center text-xs font-semibold">VISA</div>
-                    <div className="w-12 h-8 rounded-md bg-muted flex items-center justify-center text-xs font-semibold">M-CARD</div>
-                    <div className="w-12 h-8 rounded-md bg-muted flex items-center justify-center text-xs font-semibold">MTN</div>
-                  </div>
-                </div>
-               <div className="space-y-2">
-                  <Label htmlFor="card-number">Card Number</Label>
-                  <Input id="card-number" placeholder="**** **** **** 1234" required />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="expiry-date">Expiry Date</Label>
-                    <Input id="expiry-date" placeholder="MM/YY" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cvc">CVC</Label>
-                    <Input id="cvc" placeholder="123" required />
-                  </div>
-                </div>
-                 <div className="flex items-start space-x-3 rounded-md border border-dashed p-4">
+            <CardContent>
+               <Tabs defaultValue="card" className="w-full" onValueChange={setPaymentMethod}>
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="card"><CreditCard className="mr-2 h-4 w-4" />Card</TabsTrigger>
+                  <TabsTrigger value="mobile"><Smartphone className="mr-2 h-4 w-4" />Mobile</TabsTrigger>
+                  <TabsTrigger value="telecel">Telecel</TabsTrigger>
+                </TabsList>
+                <TabsContent value="card" className="pt-4">
+                   <div className="space-y-4">
+                     <div className="space-y-2">
+                        <Label htmlFor="card-number">Card Number</Label>
+                        <Input id="card-number" placeholder="**** **** **** 1234" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="expiry-date">Expiry Date</Label>
+                          <Input id="expiry-date" placeholder="MM/YY" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="cvc">CVC</Label>
+                          <Input id="cvc" placeholder="123" />
+                        </div>
+                      </div>
+                   </div>
+                </TabsContent>
+                <TabsContent value="mobile" className="pt-4">
+                   <div className="space-y-4">
+                      <RadioGroup defaultValue="mtn">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="mtn" id="mtn" />
+                          <Label htmlFor="mtn">MTN Mobile Money</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="vodafone" id="vodafone" />
+                          <Label htmlFor="vodafone">Vodafone Cash</Label>
+                        </div>
+                      </RadioGroup>
+                      <div className="space-y-2">
+                        <Label htmlFor="mobile-number">Phone Number</Label>
+                        <Input id="mobile-number" placeholder="024 123 4567" />
+                      </div>
+                   </div>
+                </TabsContent>
+                 <TabsContent value="telecel" className="pt-4">
+                   <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="telecel-number">Telecel Pay Number</Label>
+                        <Input id="telecel-number" placeholder="050 123 4567" />
+                      </div>
+                   </div>
+                </TabsContent>
+              </Tabs>
+               <div className="flex items-start space-x-3 rounded-md border border-dashed p-4 mt-6">
                   <Bot className="h-6 w-6 text-primary mt-1"/>
                   <div className="text-sm text-muted-foreground">
                     <p className="font-semibold text-foreground">This is a simulated payment.</p>
