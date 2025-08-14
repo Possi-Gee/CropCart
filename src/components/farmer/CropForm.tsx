@@ -101,11 +101,11 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
         imageUrl = await getDownloadURL(storageRef);
       }
       
-      if (!imageUrl) {
+      if (!imageUrl && !crop) {
         imageUrl = "https://placehold.co/600x400.png";
       }
 
-      const finalData = {
+      const finalData: Omit<Crop, 'id'> = {
         name: values.name,
         price: values.price,
         description: values.description,
@@ -115,12 +115,13 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
         location: values.location || "",
         contact: values.contact || "",
         image: imageUrl,
+        farmerId: user.id
       };
 
       if (crop) {
-        await updateCrop({ ...crop, ...finalData });
+        await updateCrop({ ...finalData, id: crop.id });
       } else {
-        await addCrop({ ...finalData, farmerId: user.id });
+        await addCrop(finalData);
       }
     } catch (error) {
       console.error("Failed to save listing:", error);
@@ -313,3 +314,5 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
     </Card>
   );
 }
+
+    
