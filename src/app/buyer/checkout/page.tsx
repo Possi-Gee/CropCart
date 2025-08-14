@@ -23,10 +23,11 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState("card");
 
   useEffect(() => {
-    if (!loading && cart.length === 0) {
+    // Only redirect if loading is complete, cart is empty, and we are not in the middle of processing an order.
+    if (!loading && cart.length === 0 && !isLoading) {
       router.replace("/buyer/cart");
     }
-  }, [cart, loading, router]);
+  }, [cart, loading, router, isLoading]);
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,12 +36,14 @@ export default function CheckoutPage() {
       // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 1500));
       await placeOrder();
-      clearCart();
+      
       toast({
         title: "Order Placed Successfully!",
         description: "Thank you for your purchase. You can view your order in your account.",
       });
+      clearCart(); // Clear cart only after successful order
       router.push("/buyer/account/orders");
+
     } catch (error) {
       toast({
         title: "Order Failed",
