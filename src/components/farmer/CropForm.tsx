@@ -50,20 +50,20 @@ const categories = ["Vegetable", "Fruit", "Grain", "Berries", "Herbs", "Fungi"];
 export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps) {
   const { addCrop, updateCrop, user } = useAppContext();
   const [isUploading, setIsUploading] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(crop?.image || null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: crop?.name ?? "",
-      price: crop?.price ?? ('' as any),
-      description: crop?.description ?? "",
-      category: crop?.category ?? undefined,
-      quantity: crop?.quantity ?? ('' as any),
-      unit: crop?.unit ?? "kg",
-      location: crop?.location ?? "",
-      contact: crop?.contact ?? "",
+      name: "",
+      price: '' as any,
+      description: "",
+      category: undefined,
+      quantity: '' as any,
+      unit: "kg",
+      location: "",
+      contact: "",
       image: undefined,
     },
   });
@@ -82,10 +82,25 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
         image: undefined,
       });
       setImagePreview(crop.image);
+      setImageFile(null);
+    } else {
+        form.reset({
+            name: "",
+            price: '' as any,
+            description: "",
+            category: undefined,
+            quantity: '' as any,
+            unit: "kg",
+            location: "",
+            contact: "",
+            image: undefined,
+        });
+        setImagePreview(null);
+        setImageFile(null);
     }
   }, [crop, form]);
 
-  const onSubmit = async (values: z.infer<typeof formSchema>>) => {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user) {
       console.error("User not authenticated");
       return;
@@ -99,11 +114,11 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
         const storageRef = ref(storage, `crop-images/${user.id}/${Date.now()}_${imageFile.name}`);
         await uploadBytes(storageRef, imageFile);
         imageUrl = await getDownloadURL(storageRef);
-      } else if (!crop) { // Only set placeholder for new crops without an image
+      } else if (!imageUrl && !crop) {
          imageUrl = "https://placehold.co/600x400.png";
       }
       
-      const finalData = {
+      const finalData: Omit<Crop, 'id'> = {
         name: values.name,
         price: values.price,
         description: values.description,
