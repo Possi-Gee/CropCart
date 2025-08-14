@@ -53,10 +53,10 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: crop?.name ?? "",
-      price: crop?.price ?? undefined,
+      price: crop?.price ?? 0,
       description: crop?.description ?? "",
       category: crop?.category ?? undefined,
-      quantity: crop?.quantity ?? undefined,
+      quantity: crop?.quantity ?? 0,
       unit: crop?.unit ?? "",
       image: crop?.image ?? undefined,
       location: crop?.location ?? "",
