@@ -12,6 +12,7 @@ export function MobileNav() {
   const navItems = [
     { href: "/farmer/dashboard", icon: LayoutGrid, label: "Overview" },
     { href: "/farmer/listings", icon: List, label: "Listings" },
+    { href: "/farmer/listings/add", icon: PlusCircle, label: "Add" },
     { href: "/farmer/orders", icon: Package, label: "Orders" },
     { href: "/farmer/account", icon: UserIcon, label: "Account" },
   ];
