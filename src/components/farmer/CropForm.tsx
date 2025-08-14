@@ -22,10 +22,16 @@ import { Progress } from "../ui/progress";
 
 const formSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters long."),
-  price: z.coerce.number().min(0.01, "Price must be positive."),
+  price: z.preprocess(
+    (a) => (a === '' ? undefined : a),
+    z.coerce.number({invalid_type_error: "Price is required."}).min(0.01, "Price must be positive.")
+  ),
   description: z.string().min(10, "Description must be at least 10 characters long."),
   category: z.string({required_error: "Please select a category."}),
-  quantity: z.coerce.number().min(0, "Quantity cannot be negative."),
+  quantity: z.preprocess(
+    (a) => (a === '' ? undefined : a),
+    z.coerce.number({invalid_type_error: "Quantity is required."}).min(0, "Quantity cannot be negative.")
+  ),
   unit: z.string().min(1, "Unit is required."),
   image: z.union([
       z.string().url("Must be a valid image URL."),
@@ -53,10 +59,10 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: crop?.name ?? "",
-      price: crop?.price ?? 0,
+      price: crop?.price ?? ('' as any),
       description: crop?.description ?? "",
       category: crop?.category ?? undefined,
-      quantity: crop?.quantity ?? 0,
+      quantity: crop?.quantity ?? ('' as any),
       unit: crop?.unit ?? "",
       image: crop?.image ?? undefined,
       location: crop?.location ?? "",
@@ -66,10 +72,9 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
 
  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsUploading(true);
-    let imageUrl = crop?.image; // Start with existing image if available
+    let imageUrl = crop?.image; 
 
     try {
-        // Step 1: Handle image upload if a new file is provided
         if (values.image && values.image instanceof File) {
             if (!user) throw new Error("Authentication required for upload.");
             
@@ -79,25 +84,20 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
             imageUrl = await getDownloadURL(snapshot.ref);
         }
 
-        // Step 2: Prepare the final data object for Firestore, ensuring it has a valid image URL
         const finalData = {
             ...values,
-            image: imageUrl || "https://placehold.co/600x400.png", // Fallback to placeholder
+            image: imageUrl || "https://placehold.co/600x400.png",
         };
 
-        // Step 3: Save the data to Firestore
         if (crop) {
             await updateCrop({ ...crop, ...finalData });
         } else {
-            // The 'id' and 'farmerId' will be handled by the addCrop context function
             await addCrop(finalData as Omit<Crop, 'id' | 'farmerId'>);
         }
 
     } catch (error) {
         console.error("Failed to save listing:", error);
-        // Optionally: show a toast notification to the user about the failure
     } finally {
-        // Step 4: Reset state and call onFinished callback
         setIsUploading(false);
         onFinished();
     }
@@ -132,7 +132,6 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-8 items-start">
-                {/* Left Column: Form Fields */}
                 <div className="space-y-4">
                   <FormField
                     control={form.control}
@@ -183,7 +182,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Price (¢)</FormLabel>
-                          <FormControl><Input type="number" step="0.01" placeholder="e.g. 15.00" {...field} /></FormControl>
+                          <FormControl><Input type="number" step="0.01" placeholder="15.00" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -194,7 +193,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Available</FormLabel>
-                          <FormControl><Input type="number" placeholder="e.g. 50" {...field} /></FormControl>
+                          <FormControl><Input type="number" placeholder="50" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -205,7 +204,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Unit</FormLabel>
-                          <FormControl><Input placeholder="e.g. kg" {...field} /></FormControl>
+                          <FormControl><Input placeholder="kg" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -238,7 +237,6 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
                    </div>
                 </div>
 
-                {/* Right Column: Image Upload */}
                 <div className="space-y-2">
                    <FormLabel htmlFor="image-upload">Product Image</FormLabel>
                   {imagePreview ? (
