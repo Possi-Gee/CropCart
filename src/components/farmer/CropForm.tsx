@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Separator } from "../ui/separator";
 import { storage } from "@/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Upload, X } from "lucide-react";
 import { Progress } from "../ui/progress";
@@ -23,23 +23,21 @@ import { Progress } from "../ui/progress";
 const formSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters long."),
   price: z.preprocess(
-    (a) => (a === '' ? undefined : a),
-    z.coerce.number({invalid_type_error: "Price is required."}).min(0, "Price must be non-negative.")
+    (val) => (val === "" ? undefined : Number(val)),
+    z.number({ required_error: "Price is required." }).min(0, "Price must be non-negative.")
   ),
   description: z.string().min(10, "Description must be at least 10 characters long."),
-  category: z.string({required_error: "Please select a category."}),
+  category: z.string({ required_error: "Please select a category." }),
   quantity: z.preprocess(
-    (a) => (a === '' ? undefined : a),
-    z.coerce.number({invalid_type_error: "Quantity is required."}).min(0, "Quantity cannot be negative.")
+    (val) => (val === "" ? undefined : Number(val)),
+    z.number({ required_error: "Quantity is required." }).min(0, "Quantity cannot be negative.")
   ),
   unit: z.string().min(1, "Unit is required."),
-  image: z.union([
-      z.string().url("Must be a valid image URL.").optional(),
-      z.any().refine(file => file instanceof File, "Image is required.").optional(),
-  ]).optional(),
+  image: z.any().optional(),
   location: z.string().optional(),
   contact: z.string().optional(),
 });
+
 
 interface CropFormProps {
   crop: Crop | null;
@@ -52,8 +50,8 @@ const categories = ["Vegetable", "Fruit", "Grain", "Berries", "Herbs", "Fungi"];
 export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps) {
   const { addCrop, updateCrop, user } = useAppContext();
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [imagePreview, setImagePreview] = useState<string | null>(crop?.image || null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -63,57 +61,64 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
       description: crop?.description ?? "",
       category: crop?.category ?? undefined,
       quantity: crop?.quantity ?? ('' as any),
-      unit: crop?.unit ?? "",
-      image: crop?.image ?? undefined,
+      unit: crop?.unit ?? "kg",
+      image: undefined,
       location: crop?.location ?? "",
       contact: crop?.contact ?? "",
     },
   });
 
- async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsUploading(true);
-    try {
-        let imageUrl = crop?.image; 
-
-        if (values.image && values.image instanceof File) {
-            if (!user) throw new Error("Authentication required for upload.");
-            
-            const file = values.image;
-            const storageRef = ref(storage, `crop-images/${user.id}/${Date.now()}_${file.name}`);
-            const snapshot = await uploadBytes(storageRef, file);
-            imageUrl = await getDownloadURL(snapshot.ref);
-        }
-
-        const finalData: Omit<Crop, 'id' | 'farmerId'> = {
-            name: values.name,
-            price: values.price!,
-            description: values.description,
-            category: values.category!,
-            quantity: values.quantity!,
-            unit: values.unit,
-            image: imageUrl || "https://placehold.co/600x400.png",
-            location: values.location || "",
-            contact: values.contact || "",
-        };
-
-        if (crop) {
-            await updateCrop({ ...finalData, id: crop.id, farmerId: crop.farmerId });
-        } else {
-            await addCrop(finalData);
-        }
-
-    } catch (error) {
-        console.error("Failed to save listing:", error);
-    } finally {
-        setIsUploading(false);
-        onFinished();
+  useEffect(() => {
+    if (crop?.image) {
+      setImagePreview(crop.image);
     }
-}
+  }, [crop]);
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!user) {
+      console.error("User not authenticated");
+      return;
+    }
+    setIsUploading(true);
+
+    try {
+      let imageUrl = crop?.image || "https://placehold.co/600x400.png";
+
+      if (imageFile) {
+        const storageRef = ref(storage, `crop-images/${user.id}/${Date.now()}_${imageFile.name}`);
+        await uploadBytes(storageRef, imageFile);
+        imageUrl = await getDownloadURL(storageRef);
+      }
+      
+      const finalData: Omit<Crop, 'id' | 'farmerId'> = {
+        name: values.name,
+        price: values.price,
+        description: values.description,
+        category: values.category,
+        quantity: values.quantity,
+        unit: values.unit,
+        location: values.location || "",
+        contact: values.contact || "",
+        image: imageUrl,
+      };
+
+      if (crop) {
+        await updateCrop({ ...finalData, id: crop.id, farmerId: crop.farmerId });
+      } else {
+        await addCrop(finalData);
+      }
+    } catch (error) {
+      console.error("Failed to save listing:", error);
+    } finally {
+      setIsUploading(false);
+      onFinished();
+    }
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      form.setValue('image', file);
+      setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -123,8 +128,9 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
   };
 
   const removeImage = () => {
-    form.setValue('image', undefined);
+    setImageFile(null);
     setImagePreview(null);
+    form.setValue("image", undefined);
   };
 
   return (
@@ -172,7 +178,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a category" />
-                            </SelectTrigger>
+                            </Trigger>
                           </FormControl>
                           <SelectContent>
                             {categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
@@ -187,7 +193,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
                       control={form.control}
                       name="price"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="flex-1">
                           <FormLabel>Price (¢)</FormLabel>
                           <FormControl><Input type="number" step="0.01" placeholder="15.00" {...field} /></FormControl>
                           <FormMessage />
@@ -198,7 +204,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
                       control={form.control}
                       name="quantity"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="flex-1">
                           <FormLabel>Available</FormLabel>
                           <FormControl><Input type="number" placeholder="50" {...field} /></FormControl>
                           <FormMessage />
@@ -209,7 +215,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
                       control={form.control}
                       name="unit"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="flex-1">
                           <FormLabel>Unit</FormLabel>
                           <FormControl><Input placeholder="kg" {...field} /></FormControl>
                           <FormMessage />
@@ -260,7 +266,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                 <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
                                 <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                                <p className="text-xs text-muted-foreground">PNG, JPG or GIF (MAX. 800x400px)</p>
+                                <p className="text-xs text-muted-foreground">PNG, JPG or GIF</p>
                             </div>
                             <FormControl>
                                 <Input id="image-upload" type="file" className="hidden" onChange={handleImageChange} accept="image/png, image/jpeg, image/gif" />
@@ -268,8 +274,16 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
                         </label>
                     </div> 
                   )}
-                   <FormMessage>{form.formState.errors.image?.message as string}</FormMessage>
-                   {isUploading && <Progress value={uploadProgress} className="w-full mt-2" />}
+                   <FormField
+                    control={form.control}
+                    name="image"
+                    render={() => (
+                      <FormItem>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   {isUploading && <Progress value={50} className="w-full mt-2" />}
                 </div>
               </div>
 
