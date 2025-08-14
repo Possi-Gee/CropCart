@@ -58,8 +58,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<(User & { email?: string }) | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [crops, setCrops] = useState<Crop[]>([]);
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [wishlist, setWishlist] = useState<Crop[]>([]);
+  const [cart, setCart] = useState<CartItem[]>(() => getInitialState<CartItem[]>('cropcart-cart', []));
+  const [wishlist, setWishlist] = useState<Crop[]>(() => getInitialState<Crop[]>('cropcart-wishlist', []));
   const [orders, setOrders] = useState<Order[]>([]);
   const [farmers, setFarmers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -156,9 +156,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       try {
         let ordersQuery;
         if (user.role === 'buyer') {
-             ordersQuery = query(collection(db, "orders"), where("buyer.id", "==", user.id), orderBy("date", "desc"));
+             ordersQuery = query(collection(db, "orders"), where("buyer.id", "==", user.id));
         } else {
-            ordersQuery = query(collection(db, "orders"), where("farmerIds", "array-contains", user.id), orderBy("date", "desc"));
+            ordersQuery = query(collection(db, "orders"), where("farmerIds", "array-contains", user.id));
         }
         const ordersSnapshot = await getDocs(ordersQuery);
         const ordersList = ordersSnapshot.docs.map(doc => {
@@ -167,6 +167,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           const date = data.date ? (data.date as Timestamp).toDate() : new Date();
           return { id: doc.id, ...data, date } as Order;
         });
+
+        // Sort orders by date client-side
+        ordersList.sort((a, b) => (b.date as Date).getTime() - (a.date as Date).getTime());
+
         setOrders(ordersList);
 
       } catch (error) {
