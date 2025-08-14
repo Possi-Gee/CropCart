@@ -68,6 +68,7 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
     setIsUploading(true);
     let imageUrl = crop?.image || "https://placehold.co/600x400.png";
 
+    // Check if a new file is being uploaded
     if (values.image && values.image instanceof File) {
       if (!user) {
         console.error("No user found for image upload");
@@ -78,34 +79,33 @@ export function CropForm({ crop, onFinished, showHeader = true }: CropFormProps)
         const file = values.image;
         const storageRef = ref(storage, `crop-images/${user.id}/${Date.now()}_${file.name}`);
         
-        // Using uploadBytes which is simpler for this case
         const snapshot = await uploadBytes(storageRef, file);
         imageUrl = await getDownloadURL(snapshot.ref);
         
       } catch (error) {
         console.error("Image upload failed:", error);
         setIsUploading(false);
-        // Optionally: show a toast notification for upload failure
         return;
       }
     } else if (typeof values.image === 'string') {
         imageUrl = values.image;
+    } else if (!imagePreview) {
+        // If there's no new file and no existing image, use placeholder
+        imageUrl = "https://placehold.co/600x400.png";
     }
 
-
+    // Prepare the final data object, ensuring image is the URL
     const finalValues = {
       ...values,
       image: imageUrl,
     };
-    
-    // Deleting the image from the object before saving to Firestore
-    delete finalValues.image;
-
 
     if (crop) {
-      await updateCrop({ ...crop, ...finalValues, image: imageUrl });
+      // For updates, we pass the whole object including the ID
+      await updateCrop({ ...crop, ...finalValues });
     } else {
-      await addCrop(finalValues as Omit<Crop, 'id' | 'farmerId'>);
+      // For additions, we pass the object without the id or farmerId (which is added by addCrop)
+      await addCrop(finalValues);
     }
     
     setIsUploading(false);

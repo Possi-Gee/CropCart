@@ -156,20 +156,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       try {
         let ordersQuery;
         if (user.role === 'buyer') {
-            ordersQuery = query(collection(db, "orders"), where("buyer.id", "==", user.id));
+             ordersQuery = query(collection(db, "orders"), where("buyer.id", "==", user.id));
         } else {
             ordersQuery = query(collection(db, "orders"), where("farmerIds", "array-contains", user.id));
         }
         const ordersSnapshot = await getDocs(ordersQuery);
         const ordersList = ordersSnapshot.docs.map(doc => {
           const data = doc.data();
-          const date = data.date instanceof Timestamp ? data.date.toDate() : new Date();
-          return { 
-            id: doc.id, 
-            ...data,
-            date: date
-          } as Order;
-        }).sort((a,b) => (b.date as Date).getTime() - (a.date as Date).getTime()); // Sort client-side
+          // Safely handle date conversion
+          const date = data.date ? (data.date as Timestamp).toDate() : new Date();
+          return { id: doc.id, ...data, date } as Order;
+        }).sort((a,b) => b.date.getTime() - a.date.getTime()); // Sort client-side
         setOrders(ordersList);
 
       } catch (error) {
@@ -226,10 +223,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const addCrop = async (crop: Omit<Crop, 'id' | 'farmerId'>) => {
+  const addCrop = async (cropData: Omit<Crop, 'id' | 'farmerId'>) => {
     if (user?.role !== 'farmer') return;
     try {
-        const newCropData = { ...crop, farmerId: user.id };
+        const newCropData = { ...cropData, farmerId: user.id };
         const docRef = await addDoc(collection(db, "crops"), newCropData);
         setCrops(prev => [...prev, { ...newCropData, id: docRef.id }]);
     } catch (error) {
@@ -239,9 +236,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const updateCrop = async (updatedCrop: Crop) => {
     try {
-        const cropDocRef = doc(db, "crops", updatedCrop.id);
-        await updateDoc(cropDocRef, updatedCrop);
-        setCrops(prev => prev.map(c => c.id === updatedCrop.id ? updatedCrop : c));
+        // The object passed to updateDoc should not contain the 'id' field
+        const { id, ...cropData } = updatedCrop;
+        const cropDocRef = doc(db, "crops", id);
+        await updateDoc(cropDocRef, cropData);
+        setCrops(prev => prev.map(c => c.id === id ? updatedCrop : c));
     } catch(error) {
         console.error("Error updating crop:", error);
     }
@@ -301,7 +300,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 id: user.id,
                 name: user.name,
                 role: 'buyer',
-                contact: user.contact || '',
+                contact: user.contact || '', // Ensure contact is not undefined
                 avatarUrl: user.avatarUrl,
             },
             items: cart,
